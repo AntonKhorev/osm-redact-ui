@@ -8,7 +8,7 @@ function main(): void {
 	$apiInput.value=`http://127.0.0.1:3000/`
 
 	const $tokenInput=makeElement('input')()()
-	$tokenInput.required=true
+	// $tokenInput.required=true
 
 	const $redactedChangesetInput=makeElement('input')()()
 	$redactedChangesetInput.required=true
@@ -42,6 +42,7 @@ function main(): void {
 		$fetchLog
 	)
 	const $expectedChangesCountOutput=makeElement('output')()()
+	const $downloadedChangesCountOutput=makeElement('output')()()
 	
 	let abortController: AbortController | null = null
 	$form.onsubmit=async(ev)=>{
@@ -49,33 +50,41 @@ function main(): void {
 		clearResults()
 		$startButton.disabled=true
 		abortController?.abort()
-		abortController=new AbortController
 		// TODO: token
 		try {
 			let expectedChangesCount: number
 			{
 				const url=`${$apiInput.value}api/0.6/changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`
-				$fetchLog.append(
-					makeElement('li')()(
-						makeElement('code')()(`GET ${url}`)
-					)
-				)
+				appendGetRequestToFetchLog(url)
+				abortController=new AbortController
 				const response=await fetch(url,{signal: abortController.signal})
 				if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
 				const json=await response.json()
 				expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
 			}
 			$expectedChangesCountOutput.value=String(expectedChangesCount)
-			// const changesResponse=
-			// &show_redactions=true
+
+			let downloadedChangesCount=0
+			{
+				const url=`${$apiInput.value}api/0.6/changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`
+				appendGetRequestToFetchLog(url)
+				abortController=new AbortController
+				const response=await fetch(url,{signal: abortController.signal})
+				if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
+				const text=await response.text()
+				const doc=new DOMParser().parseFromString(text,`text/xml`)
+				for (const $element of doc.querySelectorAll('node, way, relation')) {
+					downloadedChangesCount++
+					console.log($element.localName,$element.id,$element.getAttribute('version'))
+				}
+				$downloadedChangesCountOutput.value=String(downloadedChangesCount)
+			}
 		} catch (ex) {
 			console.log(ex)
 		} finally {
 			$startButton.disabled=false
 			abortController=null
 		}
-		// TODO: remember number of changes
-		// TODO: download changes
 		// TODO: compare number of changes to downloaded
 		// TODO: fetch top versions of elements
 	}
@@ -91,6 +100,9 @@ function main(): void {
 			$fetchDetails,
 			makeDiv('output-group')(
 				`Expected changes count: `,$expectedChangesCountOutput
+			),
+			makeDiv('output-group')(
+				`Downloaded changes count: `,$downloadedChangesCountOutput
 			)
 		)
 	)
@@ -98,6 +110,16 @@ function main(): void {
 	function clearResults(): void {
 		$expectedChangesCountOutput.value=''
 		$fetchLog.replaceChildren()
+	}
+
+	function appendGetRequestToFetchLog(url: string): void {
+		$fetchLog.append(
+			makeElement('li')()(
+				makeElement('code')()(
+					`GET `,makeLink(url,url)
+				)
+			)
+		)
 	}
 }
 
