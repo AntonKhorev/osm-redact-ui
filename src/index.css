@@ -1,0 +1,17 @@
+form {
+	display: flex;
+	flex-direction: column;
+	gap: .5rem;
+
+	.input-group {
+		input, button {
+			display: block;
+			box-sizing: border-box;
+			width: 100%;
+		}
+
+		button { 
+			padding: .5rem;
+		}
+	}
+}
