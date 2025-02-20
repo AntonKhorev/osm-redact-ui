@@ -139,6 +139,7 @@ function main(): void {
 				}
 				$downloadedChangesCountOutput.value=String(downloadedChangesCount)
 			}
+			if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`got missing elements in changeset changes`)
 
 			{
 				for (const query of startingVersions.listMultiFetchBatches()) {
@@ -157,8 +158,6 @@ function main(): void {
 			$startButton.disabled=false
 			abortController=null
 		}
-		// TODO: compare number of changes to downloaded
-		// TODO: fetch top versions of elements
 	}
 
 	document.body.append(
