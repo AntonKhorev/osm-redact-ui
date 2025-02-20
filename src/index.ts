@@ -1,5 +1,60 @@
 import { makeElement, makeDiv, makeLabel, makeLink } from './html'
 
+type OsmElementType = 'node'|'way'|'relation'
+
+function isOsmElementType(t: unknown): t is OsmElementType {
+	if (typeof t != 'string') return false
+	return t=='node' || t=='way' || t=='relation'
+}
+
+class OsmElementLowerVersionCollection {
+	nodes=new Map<number,number>
+	ways=new Map<number,number>
+	relations=new Map<number,number>
+
+	add(type: OsmElementType, id: number, version: number) {
+		let typeMap: Map<number,number>
+		if (type=='node') {
+			typeMap=this.nodes
+		} else if (type=='way') {
+			typeMap=this.ways
+		} else if (type=='relation') {
+			typeMap=this.relations
+		} else {
+			throw new TypeError(`tried to add invalid element type`)
+		}
+		const existingVersion=typeMap.get(id)
+		if (existingVersion==null || version<existingVersion) {
+			typeMap.set(id,version)
+		}
+	}
+
+	*listMultiFetchBatches(): Generator<string> {
+		const maxQueryLength=1000
+		const typesAndMaps: [string,Map<number,number>][] = [
+			['nodes', this.nodes],
+			['ways', this.ways],
+			['relations', this.relations],
+		]
+		for (const [pluralType,typeMap] of typesAndMaps) {
+			let query: string|undefined
+			for (const id of typeMap.keys()) {
+				if (query && query.length>maxQueryLength) {
+					yield query
+					query=undefined
+				}
+				if (query==null) {
+					query=`${pluralType}.json?${pluralType}=`
+				} else {
+					query+=`,`
+				}
+				query+=String(id)
+			}
+			if (query!=null) yield query
+		}
+	}
+}
+
 main()
 
 function main(): void {
@@ -65,6 +120,7 @@ function main(): void {
 			$expectedChangesCountOutput.value=String(expectedChangesCount)
 
 			let downloadedChangesCount=0
+			const startingVersions=new OsmElementLowerVersionCollection
 			{
 				const url=`${$apiInput.value}api/0.6/changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`
 				appendGetRequestToFetchLog(url)
@@ -75,9 +131,25 @@ function main(): void {
 				const doc=new DOMParser().parseFromString(text,`text/xml`)
 				for (const $element of doc.querySelectorAll('node, way, relation')) {
 					downloadedChangesCount++
-					console.log($element.localName,$element.id,$element.getAttribute('version'))
+					const type=$element.localName
+					if (!isOsmElementType(type)) throw new TypeError(`encountered invalid element type`)
+					const id=toPositiveInteger($element.id)
+					const version=toPositiveInteger($element.getAttribute('version'))
+					startingVersions.add(type,id,version)
 				}
 				$downloadedChangesCountOutput.value=String(downloadedChangesCount)
+			}
+
+			{
+				for (const query of startingVersions.listMultiFetchBatches()) {
+					const url=`${$apiInput.value}api/0.6/${query}`
+					appendGetRequestToFetchLog(url)
+					abortController=new AbortController
+					const response=await fetch(url,{signal: abortController.signal})
+					if (!response.ok) throw new TypeError(`failed to fetch top element versions`)
+					const json=await response.json()
+					console.log(json)
+				}
 			}
 		} catch (ex) {
 			console.log(ex)
@@ -137,4 +209,11 @@ function getChangesCountFromChangesetMetadataResponseJson(json: unknown): number
 
 function isObject(value: unknown): value is object {
 	return !!(value && typeof value == 'object')
+}
+
+function toPositiveInteger(s: unknown): number {
+	if (typeof s != 'string') throw new TypeError(`received invalid number`)
+	const n=parseInt(s,10)
+	if (!(n>0)) throw new TypeError(`received invalid number`)
+	return n
 }
