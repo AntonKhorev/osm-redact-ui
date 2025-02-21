@@ -20,10 +20,11 @@ export class OsmApiAccessor {
 
 export class OsmApiManager {
 	private abortController?: AbortController
-
-	constructor(
-		private runControls: RunControl[]
-	) {}
+	private runControls: RunControl[] = []
+	
+	addRunControl(runControl: RunControl): void {
+		this.runControls.push(runControl)
+	}
 
 	enterForm(
 		apiRoot: string,
