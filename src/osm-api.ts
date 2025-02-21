@@ -1,4 +1,5 @@
-import Logger from "./logger";
+import RunControl from "./run-control"
+import Logger from "./logger"
 
 export class OsmApiAccessor {
 	constructor(
@@ -19,46 +20,33 @@ export class OsmApiAccessor {
 
 export class OsmApiManager {
 	private abortController?: AbortController
-	private $activeFetchButton?: HTMLButtonElement
-	private activeFetchButtonOriginalLabel?: string
 
 	constructor(
-		private $fetchButtons: HTMLButtonElement[]
+		private runControls: RunControl[]
 	) {}
 
 	enterForm(
 		apiRoot: string,
 		authToken: string,
-		logger: Logger,
-		$fetchButton: HTMLButtonElement
+		activeRunControl: RunControl
 	): OsmApiAccessor {
 		if (this.abortController) this.exitForm()
 		this.abortController=new AbortController
-		this.$activeFetchButton=$fetchButton
-		this.activeFetchButtonOriginalLabel=this.$activeFetchButton.textContent??''
-		this.$activeFetchButton.textContent=`Abort`
-		this.$activeFetchButton.onclick=(ev)=>{
-			ev.preventDefault()
-			this.abortController?.abort()
+		for (const runControl of this.runControls) {
+			if (runControl==activeRunControl) {
+				runControl.enterRunningState(this.abortController)
+			} else {
+				runControl.enterDisabledState()
+			}
 		}
-		for (const $otherFetchButton of this.$fetchButtons) {
-			if ($otherFetchButton==$fetchButton) continue
-			$otherFetchButton.disabled=true
-		}
-		return new OsmApiAccessor(apiRoot,authToken,logger,this.abortController.signal)
+		return new OsmApiAccessor(apiRoot,authToken,activeRunControl.logger,this.abortController.signal)
 	}
 
 	exitForm(): void {
 		this.abortController?.abort()
 		this.abortController=undefined
-		if (this.$activeFetchButton && this.activeFetchButtonOriginalLabel!=null) {
-			this.$activeFetchButton.textContent=this.activeFetchButtonOriginalLabel
-		}
-		this.activeFetchButtonOriginalLabel=undefined
-		this.$activeFetchButton=undefined
-		for (const $fetchButton of this.$fetchButtons) {
-			$fetchButton.disabled=false
-			$fetchButton.onclick=null
+		for (const runControl of this.runControls) {
+			runControl.enterReadyState()
 		}
 	}
 }

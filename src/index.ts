@@ -1,4 +1,4 @@
-import Logger from './logger'
+import RunControl from './run-control'
 import { OsmApiManager } from './osm-api'
 import type { OsmElementType } from './osm-element-colection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-colection'
@@ -20,9 +20,11 @@ function main(): void {
 	$redactedChangesetInput.name='redacted-changeset'
 	$redactedChangesetInput.required=true
 
-	const $changesetFormButton=makeElement('button')()(`Fetch target elements`)
-
-	const fetchLogger=new Logger(`Fetch log`)
+	const changesetRunControl=new RunControl(
+		`Fetch target elements`,
+		`Abort fetching target elements`,
+		`Fetch log`
+	)
 
 	const $changesetForm=makeElement('form')()(
 		makeDiv('input-group')(
@@ -40,10 +42,7 @@ function main(): void {
 				`Redacted changeset`, $redactedChangesetInput
 			)
 		),
-		makeDiv('input-group')(
-			$changesetFormButton
-		),
-		fetchLogger.$widget
+		changesetRunControl.$widget
 	)
 
 	const $expectedChangesCountOutput=makeElement('output')()()
@@ -53,7 +52,11 @@ function main(): void {
 	$elementsToRedactTextarea.rows=10
 	$elementsToRedactTextarea.name='osm-elements-to-redact'
 	
-	const $elementsFormButton=makeElement('button')()(`Redact target elements`)
+	const elementsRunControl=new RunControl(
+		`Redact target elements`,
+		`Abort redacting target elements`,
+		`Redact log`
+	)
 
 	const $elementsForm=makeElement('form')()(
 		makeDiv('output-group')(
@@ -67,17 +70,15 @@ function main(): void {
 				`Elements to redact`, $elementsToRedactTextarea
 			)
 		),
-		makeDiv('input-group')(
-			$elementsFormButton
-		)
+		elementsRunControl.$widget
 	)
 	
-	const osmApiManager=new OsmApiManager([$changesetFormButton,$elementsFormButton])
+	const osmApiManager=new OsmApiManager([changesetRunControl,elementsRunControl])
 
 	$changesetForm.onsubmit=async(ev)=>{
 		ev.preventDefault()
 		clearResults()
-		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,fetchLogger,$changesetFormButton)
+		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,changesetRunControl)
 		try {
 			let expectedChangesCount: number
 			{
@@ -135,7 +136,7 @@ function main(): void {
 
 	$elementsForm.onsubmit=async(ev)=>{
 		ev.preventDefault()
-		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,fetchLogger,$changesetFormButton)
+		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,elementsRunControl)
 		try {
 		} catch (ex) {
 			console.log(ex)
@@ -158,7 +159,8 @@ function main(): void {
 	)
 
 	function clearResults(): void {
-		fetchLogger.clear()
+		changesetRunControl.logger.clear()
+		elementsRunControl.logger.clear()
 		$expectedChangesCountOutput.value=''
 		$downloadedChangesCountOutput.value=''
 		$elementsToRedactTextarea.value=''
