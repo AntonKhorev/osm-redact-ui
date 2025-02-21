@@ -22,6 +22,8 @@ function main(): void {
 
 	const $changesetFormButton=makeElement('button')()(`Fetch target elements`)
 
+	const fetchLogger=new Logger(`Fetch log`)
+
 	const $changesetForm=makeElement('form')()(
 		makeDiv('input-group')(
 			makeLabel()(
@@ -40,10 +42,9 @@ function main(): void {
 		),
 		makeDiv('input-group')(
 			$changesetFormButton
-		)
+		),
+		fetchLogger.$widget
 	)
-
-	const fetchLogger=new Logger
 
 	const $expectedChangesCountOutput=makeElement('output')()()
 	const $downloadedChangesCountOutput=makeElement('output')()()
@@ -135,6 +136,10 @@ function main(): void {
 	$elementsForm.onsubmit=async(ev)=>{
 		ev.preventDefault()
 		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,fetchLogger,$changesetFormButton)
+		try {
+		} catch (ex) {
+			console.log(ex)
+		}
 		// TODO: redact
 		// TODO: post-check if top versions match
 		osmApiManager.exitForm()
@@ -148,7 +153,6 @@ function main(): void {
 		),
 		makeElement('section')()(
 			makeElement('h2')()(`See target elements`),
-			fetchLogger.$widget,
 			$elementsForm
 		)
 	)

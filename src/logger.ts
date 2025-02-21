@@ -2,10 +2,15 @@ import { makeElement, makeLink } from "./html"
 
 export default class Logger {
 	private $list=makeElement('ul')()()
+	private $summary=makeElement('summary')()()
 	$widget=makeElement('details')()(
-		makeElement('summary')()(`Changeset fetch details`),
+		this.$summary,
 		this.$list
 	)
+
+	constructor(summary: string) {
+		this.$summary.textContent=summary
+	}
 
 	clear(): void {
 		this.$list.replaceChildren()
