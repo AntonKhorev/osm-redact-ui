@@ -1,5 +1,5 @@
 import Logger from './logger'
-import OsmApiAccessor from './osm-api'
+import { OsmApiManager } from './osm-api'
 import type { OsmElementType } from './osm-element-colection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-colection'
 import { makeElement, makeDiv, makeLabel } from './html'
@@ -20,7 +20,7 @@ function main(): void {
 	$redactedChangesetInput.name='redacted-changeset'
 	$redactedChangesetInput.required=true
 
-	const $startButton=makeElement('button')()(`Start`)
+	const $changesetFormButton=makeElement('button')()(`Fetch target elements`)
 
 	const $changesetForm=makeElement('form')()(
 		makeDiv('input-group')(
@@ -39,15 +39,21 @@ function main(): void {
 			)
 		),
 		makeDiv('input-group')(
-			$startButton
+			$changesetFormButton
 		)
 	)
 
 	const fetchLogger=new Logger
+
 	const $expectedChangesCountOutput=makeElement('output')()()
 	const $downloadedChangesCountOutput=makeElement('output')()()
+
 	const $elementsToRedactTextarea=makeElement('textarea')()()
 	$elementsToRedactTextarea.rows=10
+	$elementsToRedactTextarea.name='osm-elements-to-redact'
+	
+	const $elementsFormButton=makeElement('button')()(`Redact target elements`)
+
 	const $elementsForm=makeElement('form')()(
 		makeDiv('output-group')(
 			`Expected changes count: `,$expectedChangesCountOutput
@@ -59,24 +65,23 @@ function main(): void {
 			makeLabel()(
 				`Elements to redact`, $elementsToRedactTextarea
 			)
+		),
+		makeDiv('input-group')(
+			$elementsFormButton
 		)
 	)
 	
-	let abortController: AbortController | null = null
+	const osmApiManager=new OsmApiManager([$changesetFormButton,$elementsFormButton])
+
 	$changesetForm.onsubmit=async(ev)=>{
 		ev.preventDefault()
 		clearResults()
-		$startButton.disabled=true
-		abortController?.abort()
-		const osmApiAccessor=new OsmApiAccessor($apiInput.value,$tokenInput.value,fetchLogger)
-		// TODO: token
+		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,fetchLogger,$changesetFormButton)
 		try {
 			let expectedChangesCount: number
 			{
-				abortController=new AbortController
 				const response=await osmApiAccessor.get(
-					`changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`,
-					abortController.signal
+					`changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`
 				)
 				if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
 				const json=await response.json()
@@ -87,10 +92,8 @@ function main(): void {
 			let downloadedChangesCount=0
 			const startingVersions=new OsmElementLowerVersionCollection
 			{
-				abortController=new AbortController
 				const response=await osmApiAccessor.get(
-					`changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`,
-					abortController.signal
+					`changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`
 				)
 				if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
 				const text=await response.text()
@@ -110,10 +113,8 @@ function main(): void {
 			const topVersions=new OsmElementLowerVersionCollection
 			{
 				for (const query of startingVersions.listMultiFetchBatches()) {
-					abortController=new AbortController
 					const response=await osmApiAccessor.get(
-						query,
-						abortController.signal
+						query
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch top element versions`)
 					const json=await response.json()
@@ -127,13 +128,16 @@ function main(): void {
 			}
 		} catch (ex) {
 			console.log(ex)
-		} finally {
-			$startButton.disabled=false
-			abortController=null
 		}
+		osmApiManager.exitForm()
+	}
 
+	$elementsForm.onsubmit=async(ev)=>{
+		ev.preventDefault()
+		const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,fetchLogger,$changesetFormButton)
 		// TODO: redact
 		// TODO: post-check if top versions match
+		osmApiManager.exitForm()
 	}
 
 	document.body.append(
@@ -143,7 +147,7 @@ function main(): void {
 			$changesetForm
 		),
 		makeElement('section')()(
-			makeElement('h2')()(`See initial fetch results`),
+			makeElement('h2')()(`See target elements`),
 			fetchLogger.$widget,
 			$elementsForm
 		)
