@@ -4,6 +4,7 @@ import { OsmApiManager } from './osm-api'
 import type { OsmElementType } from './osm-element-collection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from './html'
+import { isObject, isArray, toPositiveInteger } from './types'
 
 export default class ChangesetStage {
 	$section=makeElement('section')()(
@@ -54,7 +55,7 @@ export default class ChangesetStage {
 			ev.preventDefault()
 			changesetRunControl.logger.clear()
 			elementsStage.clear()
-			const osmApiAccessor=osmApiManager.enterForm($apiInput.value,$tokenInput.value,changesetRunControl)
+			const osmApiAccessor=osmApiManager.enterStage($apiInput.value,$tokenInput.value,changesetRunControl)
 			try {
 				let expectedChangesCount: number
 				{
@@ -102,12 +103,13 @@ export default class ChangesetStage {
 					}
 				}
 				for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
-					elementsStage.$elementsToRedactTextarea.value+=`${type}/${id}/${version}\n`
+					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
 				}
+				elementsStage.setReadyState($apiInput.value,$tokenInput.value)
 			} catch (ex) {
 				console.log(ex)
 			}
-			osmApiManager.exitForm()
+			osmApiManager.exitStage()
 		}
 
 		this.$section.append($changesetForm)
@@ -146,19 +148,4 @@ function *listElementTypesIdsAndVersionsFromElementsResponseJson(json: unknown):
 	} else {
 		throw new TypeError(`received invalid elements data`)
 	}
-}
-
-function isObject(value: unknown): value is object {
-	return !!(value && typeof value == 'object')
-}
-
-function isArray(value: unknown): value is unknown[] {
-	return Array.isArray(value)
-}
-
-function toPositiveInteger(s: unknown): number {
-	if (typeof s != 'string') throw new TypeError(`received invalid number`)
-	const n=parseInt(s,10)
-	if (!(n>0)) throw new TypeError(`received invalid number`)
-	return n
 }

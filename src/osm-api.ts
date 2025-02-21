@@ -10,9 +10,18 @@ export class OsmApiAccessor {
 	) {}
 
 	get(path: string): Promise<Response> {
+		return this.fetch(path)
+	}
+
+	post(path: string): Promise<Response> {
+		return this.fetch(path,'POST')
+	}
+
+	fetch(path: string, method?: string): Promise<Response> {
 		const url=`${this.apiRoot}api/0.6/${path}`
 		this.logger.appendGetRequest(url)
 		const options: RequestInit = {signal: this.signal}
+		if (method) options.method=method
 		if (this.authToken) options.headers={'Authorization': `Bearer ${this.authToken}`}
 		return fetch(url,options)
 	}
@@ -26,12 +35,12 @@ export class OsmApiManager {
 		this.runControls.push(runControl)
 	}
 
-	enterForm(
+	enterStage(
 		apiRoot: string,
 		authToken: string,
 		activeRunControl: RunControl
 	): OsmApiAccessor {
-		if (this.abortController) this.exitForm()
+		if (this.abortController) this.exitStage()
 		this.abortController=new AbortController
 		for (const runControl of this.runControls) {
 			if (runControl==activeRunControl) {
@@ -43,7 +52,7 @@ export class OsmApiManager {
 		return new OsmApiAccessor(apiRoot,authToken,activeRunControl.logger,this.abortController.signal)
 	}
 
-	exitForm(): void {
+	exitStage(): void {
 		this.abortController?.abort()
 		this.abortController=undefined
 		for (const runControl of this.runControls) {
