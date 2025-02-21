@@ -8,13 +8,16 @@ main()
 
 function main(): void {
 	const $apiInput=makeElement('input')()()
+	$apiInput.name='osm-api-root'
 	$apiInput.required=true
 	$apiInput.value=`http://127.0.0.1:3000/`
 
 	const $tokenInput=makeElement('input')()()
+	$tokenInput.name='auth-token'
 	// $tokenInput.required=true
 
 	const $redactedChangesetInput=makeElement('input')()()
+	$redactedChangesetInput.name='redacted-changeset'
 	$redactedChangesetInput.required=true
 
 	const $startButton=makeElement('button')()(`Start`)
@@ -65,7 +68,7 @@ function main(): void {
 		clearResults()
 		$startButton.disabled=true
 		abortController?.abort()
-		const osmApiAccessor=new OsmApiAccessor($apiInput.value,fetchLogger)
+		const osmApiAccessor=new OsmApiAccessor($apiInput.value,$tokenInput.value,fetchLogger)
 		// TODO: token
 		try {
 			let expectedChangesCount: number
