@@ -29,6 +29,26 @@ class OsmElementLowerVersionCollection {
 		}
 	}
 
+	*listElementTypesIdsAndVersionsBefore(that: OsmElementLowerVersionCollection): Generator<[OsmElementType,number,number]> {
+		const typesAndMaps: [OsmElementType,Map<number,number>,Map<number,number>][] = [
+			['node', this.nodes, that.nodes],
+			['way', this.ways, that.ways],
+			['relation', this.relations, that.relations],
+		]
+		for (const [type,thisTypeMap,thatTypeMap] of typesAndMaps) {
+			const ids=[...thatTypeMap.keys()]
+			ids.sort((a,b)=>a-b)
+			for (const id of ids) {
+				const fromVersion=thisTypeMap.get(id)
+				const toVersion=thatTypeMap.get(id)
+				if (fromVersion==null || toVersion==null) continue
+				for (let version=fromVersion;version<toVersion;version++) {
+					yield [type,id,version]
+				}
+			}
+		}
+	}
+
 	*listMultiFetchBatches(): Generator<string> {
 		const maxQueryLength=1000
 		const typesAndMaps: [string,Map<number,number>][] = [
@@ -70,7 +90,7 @@ function main(): void {
 
 	const $startButton=makeElement('button')()(`Start`)
 
-	const $form=makeElement('form')()(
+	const $changesetForm=makeElement('form')()(
 		makeDiv('input-group')(
 			makeLabel()(
 				`OSM API url`, $apiInput
@@ -98,9 +118,24 @@ function main(): void {
 	)
 	const $expectedChangesCountOutput=makeElement('output')()()
 	const $downloadedChangesCountOutput=makeElement('output')()()
+	const $elementsToRedactTextarea=makeElement('textarea')()()
+	$elementsToRedactTextarea.rows=10
+	const $elementsForm=makeElement('form')()(
+		makeDiv('output-group')(
+			`Expected changes count: `,$expectedChangesCountOutput
+		),
+		makeDiv('output-group')(
+			`Downloaded changes count: `,$downloadedChangesCountOutput
+		),
+		makeDiv('input-group')(
+			makeLabel()(
+				`Elements to redact`, $elementsToRedactTextarea
+			)
+		)
+	)
 	
 	let abortController: AbortController | null = null
-	$form.onsubmit=async(ev)=>{
+	$changesetForm.onsubmit=async(ev)=>{
 		ev.preventDefault()
 		clearResults()
 		$startButton.disabled=true
@@ -141,6 +176,7 @@ function main(): void {
 			}
 			if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`got missing elements in changeset changes`)
 
+			const topVersions=new OsmElementLowerVersionCollection
 			{
 				for (const query of startingVersions.listMultiFetchBatches()) {
 					const url=`${$apiInput.value}api/0.6/${query}`
@@ -149,8 +185,13 @@ function main(): void {
 					const response=await fetch(url,{signal: abortController.signal})
 					if (!response.ok) throw new TypeError(`failed to fetch top element versions`)
 					const json=await response.json()
-					console.log(json)
+					for (const [type,id,version] of listElementTypesIdsAndVersionsFromElementsResponseJson(json)) {
+						topVersions.add(type,id,version)
+					}
 				}
+			}
+			for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
+				$elementsToRedactTextarea.value+=`${type}/${id}/${version}\n`
 			}
 		} catch (ex) {
 			console.log(ex)
@@ -164,23 +205,20 @@ function main(): void {
 		makeElement('h1')()(`Redact changeset`),
 		makeElement('section')()(
 			makeElement('h2')()(`Enter initial information`),
-			$form
+			$changesetForm
 		),
 		makeElement('section')()(
 			makeElement('h2')()(`See initial fetch results`),
 			$fetchDetails,
-			makeDiv('output-group')(
-				`Expected changes count: `,$expectedChangesCountOutput
-			),
-			makeDiv('output-group')(
-				`Downloaded changes count: `,$downloadedChangesCountOutput
-			)
+			$elementsForm
 		)
 	)
 
 	function clearResults(): void {
-		$expectedChangesCountOutput.value=''
 		$fetchLog.replaceChildren()
+		$expectedChangesCountOutput.value=''
+		$downloadedChangesCountOutput.value=''
+		$elementsToRedactTextarea.value=''
 	}
 
 	function appendGetRequestToFetchLog(url: string): void {
@@ -206,8 +244,34 @@ function getChangesCountFromChangesetMetadataResponseJson(json: unknown): number
 	}
 }
 
+function *listElementTypesIdsAndVersionsFromElementsResponseJson(json: unknown): Generator<[OsmElementType,number,number]> {
+	if (
+		isObject(json) && 'elements' in json &&
+		isArray(json.elements)
+	) {
+		for (const element of json.elements) {
+			if (
+				isObject(element) &&
+				'type' in element && isOsmElementType(element.type) &&
+				'id' in element && typeof element.id == 'number' &&
+				'version' in element && typeof element.version == 'number'
+			) {
+				yield [element.type,element.id,element.version]
+			} else {
+				throw new TypeError(`received invalid element data`)
+			}
+		}
+	} else {
+		throw new TypeError(`received invalid elements data`)
+	}
+}
+
 function isObject(value: unknown): value is object {
 	return !!(value && typeof value == 'object')
+}
+
+function isArray(value: unknown): value is unknown[] {
+	return Array.isArray(value)
 }
 
 function toPositiveInteger(s: unknown): number {

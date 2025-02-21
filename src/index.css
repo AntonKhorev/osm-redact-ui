@@ -4,7 +4,7 @@ form {
 	gap: .5rem;
 
 	.input-group {
-		input, button {
+		input, textarea, button {
 			display: block;
 			box-sizing: border-box;
 			width: 100%;
