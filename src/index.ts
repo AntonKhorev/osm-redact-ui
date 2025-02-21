@@ -1,6 +1,8 @@
+import Logger from './logger'
+import OsmApiAccessor from './osm-api'
 import type { OsmElementType } from './osm-element-colection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-colection'
-import { makeElement, makeDiv, makeLabel, makeLink } from './html'
+import { makeElement, makeDiv, makeLabel } from './html'
 
 main()
 
@@ -38,11 +40,7 @@ function main(): void {
 		)
 	)
 
-	const $fetchLog=makeElement('ul')()()
-	const $fetchDetails=makeElement('details')()(
-		makeElement('summary')()(`Changeset fetch details`),
-		$fetchLog
-	)
+	const fetchLogger=new Logger
 	const $expectedChangesCountOutput=makeElement('output')()()
 	const $downloadedChangesCountOutput=makeElement('output')()()
 	const $elementsToRedactTextarea=makeElement('textarea')()()
@@ -67,14 +65,16 @@ function main(): void {
 		clearResults()
 		$startButton.disabled=true
 		abortController?.abort()
+		const osmApiAccessor=new OsmApiAccessor($apiInput.value,fetchLogger)
 		// TODO: token
 		try {
 			let expectedChangesCount: number
 			{
-				const url=`${$apiInput.value}api/0.6/changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`
-				appendGetRequestToFetchLog(url)
 				abortController=new AbortController
-				const response=await fetch(url,{signal: abortController.signal})
+				const response=await osmApiAccessor.get(
+					`changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`,
+					abortController.signal
+				)
 				if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
 				const json=await response.json()
 				expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
@@ -84,10 +84,11 @@ function main(): void {
 			let downloadedChangesCount=0
 			const startingVersions=new OsmElementLowerVersionCollection
 			{
-				const url=`${$apiInput.value}api/0.6/changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`
-				appendGetRequestToFetchLog(url)
 				abortController=new AbortController
-				const response=await fetch(url,{signal: abortController.signal})
+				const response=await osmApiAccessor.get(
+					`changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`,
+					abortController.signal
+				)
 				if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
 				const text=await response.text()
 				const doc=new DOMParser().parseFromString(text,`text/xml`)
@@ -106,10 +107,11 @@ function main(): void {
 			const topVersions=new OsmElementLowerVersionCollection
 			{
 				for (const query of startingVersions.listMultiFetchBatches()) {
-					const url=`${$apiInput.value}api/0.6/${query}`
-					appendGetRequestToFetchLog(url)
 					abortController=new AbortController
-					const response=await fetch(url,{signal: abortController.signal})
+					const response=await osmApiAccessor.get(
+						query,
+						abortController.signal
+					)
 					if (!response.ok) throw new TypeError(`failed to fetch top element versions`)
 					const json=await response.json()
 					for (const [type,id,version] of listElementTypesIdsAndVersionsFromElementsResponseJson(json)) {
@@ -139,26 +141,16 @@ function main(): void {
 		),
 		makeElement('section')()(
 			makeElement('h2')()(`See initial fetch results`),
-			$fetchDetails,
+			fetchLogger.$widget,
 			$elementsForm
 		)
 	)
 
 	function clearResults(): void {
-		$fetchLog.replaceChildren()
+		fetchLogger.clear()
 		$expectedChangesCountOutput.value=''
 		$downloadedChangesCountOutput.value=''
 		$elementsToRedactTextarea.value=''
-	}
-
-	function appendGetRequestToFetchLog(url: string): void {
-		$fetchLog.append(
-			makeElement('li')()(
-				makeElement('code')()(
-					`GET `,makeLink(url,url)
-				)
-			)
-		)
 	}
 }
 
