@@ -12,10 +12,10 @@ export default class ChangesetStage {
 	)
 
 	constructor(osmApiManager: OsmApiManager, elementsStage: ElementsStage) {
-		const $apiInput=makeElement('input')()()
-		$apiInput.name='osm-api-root'
-		$apiInput.required=true
-		$apiInput.value=`http://127.0.0.1:3000/`
+		const $osmApiRootInput=makeElement('input')()()
+		$osmApiRootInput.name='osm-api-root'
+		$osmApiRootInput.required=true
+		$osmApiRootInput.value=`http://127.0.0.1:3000/`
 	
 		const $tokenInput=makeElement('input')()()
 		$tokenInput.name='auth-token'
@@ -25,17 +25,17 @@ export default class ChangesetStage {
 		$redactedChangesetInput.name='redacted-changeset'
 		$redactedChangesetInput.required=true
 	
-		const changesetRunControl=new RunControl(
+		const runControl=new RunControl(
 			`Fetch target elements`,
 			`Abort fetching target elements`,
 			`Fetch log`
 		)
-		osmApiManager.addRunControl(changesetRunControl)
+		osmApiManager.addRunControl(runControl)
 	
-		const $changesetForm=makeElement('form')()(
+		const $form=makeElement('form')()(
 			makeDiv('input-group')(
 				makeLabel()(
-					`OSM API url`, $apiInput
+					`OSM API url`, $osmApiRootInput
 				)
 			),
 			makeDiv('input-group')(
@@ -48,14 +48,14 @@ export default class ChangesetStage {
 					`Redacted changeset`, $redactedChangesetInput
 				)
 			),
-			changesetRunControl.$widget
+			runControl.$widget
 		)
 
-		$changesetForm.onsubmit=async(ev)=>{
+		$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			changesetRunControl.logger.clear()
+			runControl.logger.clear()
 			elementsStage.clear()
-			const osmApiAccessor=osmApiManager.enterStage($apiInput.value,$tokenInput.value,changesetRunControl)
+			const osmApiAccessor=osmApiManager.enterStage($osmApiRootInput.value,$tokenInput.value,runControl)
 			try {
 				let expectedChangesCount: number
 				{
@@ -105,14 +105,14 @@ export default class ChangesetStage {
 				for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
 					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
 				}
-				elementsStage.setReadyState($apiInput.value,$tokenInput.value)
+				elementsStage.setReadyState($osmApiRootInput.value,$tokenInput.value)
 			} catch (ex) {
 				console.log(ex)
 			}
 			osmApiManager.exitStage()
 		}
 
-		this.$section.append($changesetForm)
+		this.$section.append($form)
 	}
 }
 

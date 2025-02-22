@@ -25,4 +25,10 @@ export default class Logger {
 			)
 		)
 	}
+
+	appendText(text: string): void {
+		this.$list.append(
+			makeElement('li')()(text)
+		)
+	}
 }
