@@ -1,17 +1,17 @@
 import AuthorizeStage from './authorize-stage'
 import ChangesetStage from './changeset-stage'
 import ElementsStage from './elements-stage'
-import { OsmApiManager } from './osm-api'
+import AbortManager from './abort-manager'
 import { makeElement } from './html'
 
 main()
 
 function main(): void {
-	const osmApiManager=new OsmApiManager
+	const abortManager=new AbortManager
 	
 	const authorizeStage=new AuthorizeStage
-	const elementsStage=new ElementsStage(osmApiManager)
-	const changesetStage=new ChangesetStage(osmApiManager, elementsStage)
+	const elementsStage=new ElementsStage(abortManager)
+	const changesetStage=new ChangesetStage(abortManager, elementsStage)
 
 	document.body.append(
 		makeElement('h1')()(`Redact changeset`),

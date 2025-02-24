@@ -1,6 +1,7 @@
 import ElementsStage from './elements-stage'
 import RunControl from './run-control'
-import { OsmApiManager } from './osm-api'
+import AbortManager from './abort-manager'
+import OsmApi from './osm-api'
 import type { OsmElementType } from './osm-element-collection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from './html'
@@ -11,7 +12,7 @@ export default class ChangesetStage {
 		makeElement('h2')()(`Enter initial information`)
 	)
 
-	constructor(osmApiManager: OsmApiManager, elementsStage: ElementsStage) {
+	constructor(abortManager: AbortManager, elementsStage: ElementsStage) {
 		const $osmApiRootInput=makeElement('input')()()
 		$osmApiRootInput.name='osm-api-root'
 		$osmApiRootInput.required=true
@@ -30,7 +31,7 @@ export default class ChangesetStage {
 			`Abort fetching target elements`,
 			`Fetch log`
 		)
-		osmApiManager.addRunControl(runControl)
+		abortManager.addRunControl(runControl)
 	
 		const $form=makeElement('form')()(
 			makeDiv('input-group')(
@@ -55,11 +56,12 @@ export default class ChangesetStage {
 			ev.preventDefault()
 			runControl.logger.clear()
 			elementsStage.clear()
-			const osmApiAccessor=osmApiManager.enterStage($osmApiRootInput.value,$tokenInput.value,runControl)
+			const abortSignal=abortManager.enterStage(runControl)
+			const osmApi=new OsmApi($osmApiRootInput.value,$tokenInput.value,runControl.logger,abortSignal)
 			try {
 				let expectedChangesCount: number
 				{
-					const response=await osmApiAccessor.get(
+					const response=await osmApi.get(
 						`changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
@@ -71,7 +73,7 @@ export default class ChangesetStage {
 				let downloadedChangesCount=0
 				const startingVersions=new OsmElementLowerVersionCollection
 				{
-					const response=await osmApiAccessor.get(
+					const response=await osmApi.get(
 						`changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
@@ -92,7 +94,7 @@ export default class ChangesetStage {
 				const topVersions=new OsmElementLowerVersionCollection
 				{
 					for (const query of startingVersions.listMultiFetchBatches()) {
-						const response=await osmApiAccessor.get(
+						const response=await osmApi.get(
 							query
 						)
 						if (!response.ok) throw new TypeError(`failed to fetch top element versions`)
@@ -109,7 +111,7 @@ export default class ChangesetStage {
 			} catch (ex) {
 				console.log(ex)
 			}
-			osmApiManager.exitStage()
+			abortManager.exitStage()
 		}
 
 		this.$section.append($form)

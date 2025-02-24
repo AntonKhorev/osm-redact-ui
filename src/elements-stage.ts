@@ -1,5 +1,6 @@
 import RunControl from './run-control'
-import { OsmApiManager } from './osm-api'
+import AbortManager from './abort-manager'
+import OsmApi from './osm-api'
 import { isOsmElementType } from './osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from './html'
 import { toPositiveInteger } from './types'
@@ -26,7 +27,7 @@ export default class ElementsStage {
 		`Redact log`
 	)
 
-	constructor(osmApiManager: OsmApiManager) {
+	constructor(abortManager: AbortManager) {
 		this.$targetTextarea.rows=10
 		this.$targetTextarea.name='osm-elements-to-redact'
 		
@@ -35,7 +36,7 @@ export default class ElementsStage {
 		$redactionInput.required=true
 
 		this.runControl.$widget.hidden=true
-		osmApiManager.addRunControl(this.runControl)
+		abortManager.addRunControl(this.runControl)
 
 		const $form=makeElement('form')()(
 			makeDiv('output-group')(
@@ -60,7 +61,8 @@ export default class ElementsStage {
 		$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			if (!this.readyState) return
-			const osmApiAccessor=osmApiManager.enterStage(this.readyState.apiRoot,this.readyState.authToken,this.runControl)
+			const abortSignal=abortManager.enterStage(this.runControl)
+			const osmApi=new OsmApi(this.readyState.apiRoot,this.readyState.authToken,this.runControl.logger,abortSignal)
 			try {
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
@@ -78,7 +80,7 @@ export default class ElementsStage {
 							console.log(`was unable to parse redaction target line ${line}`)
 						}
 						if (redactedElementWithVersion!=null) {
-							const response=await osmApiAccessor.post(
+							const response=await osmApi.post(
 								`${redactedElementWithVersion}/redaction?redaction=${encodeURIComponent($redactionInput.value)}`
 							)
 							if (!response.ok) throw new TypeError(`failed to redact element version`)
@@ -90,7 +92,7 @@ export default class ElementsStage {
 				console.log(ex)
 			}
 			// TODO: post-check if top versions match
-			osmApiManager.exitStage()
+			abortManager.exitStage()
 		}
 
 		this.$section.append($form)
