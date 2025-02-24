@@ -74,7 +74,7 @@ export default class ChangesetStage {
 					const height=600
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					runControl.logger.appendText(`open ${urlStart} in a window`)
+					runControl.logger.appendText(`open browser window ${urlStart}`)
 					const authWindow=open(url,'_blank',
 						`width=${width},height=${height},left=${screen.width/2-width/2},top=${screen.height/2-height/2}`
 					)
