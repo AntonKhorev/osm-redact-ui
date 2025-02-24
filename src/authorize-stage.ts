@@ -61,14 +61,15 @@ export default class ChangesetStage {
 			runControl.logger.clear()
 			const abortSignal=abortManager.enterStage(runControl)
 			try {
-				const clientId=$authClientIdInput.value
+				const osmWebRoot=$osmWebRootInput.value.trim()
+				const clientId=$authClientIdInput.value.trim()
 				const redirectUri='urn:ietf:wg:oauth:2.0:oob'
 				const codeVerifier=getCodeVerifier()
 				const codeChallenge=await getCodeChallenge(codeVerifier)
 				{
 					const width=600
 					const height=600
-					const urlStart=`${$osmWebRootInput.value}oauth2/authorize`
+					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+new URLSearchParams([
 						['client_id',clientId],
 						['redirect_uri',redirectUri],
@@ -96,8 +97,8 @@ export default class ChangesetStage {
 					}
 				}
 				{
-					const code=$authCodeInput.value
-					const url=`${$osmWebRootInput.value}oauth2/token`
+					const code=$authCodeInput.value.trim()
+					const url=`${osmWebRoot}oauth2/token`
 					runControl.logger.appendText(`POST ${url}`)
 					const response=await fetch(url,{
 						signal: abortSignal,
@@ -118,6 +119,7 @@ export default class ChangesetStage {
 				console.log(ex)
 			}
 			abortManager.exitStage()
+			$authCodeInput.value=''
 		}
 
 		this.$section.append($form)
