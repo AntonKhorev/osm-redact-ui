@@ -9,7 +9,7 @@ main()
 function main(): void {
 	const abortManager=new AbortManager
 	
-	const authorizeStage=new AuthorizeStage
+	const authorizeStage=new AuthorizeStage(abortManager)
 	const elementsStage=new ElementsStage(abortManager)
 	const changesetStage=new ChangesetStage(abortManager, elementsStage)
 

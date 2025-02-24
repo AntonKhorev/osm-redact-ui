@@ -1,3 +1,4 @@
+import AbortManager from './abort-manager'
 import RunControl from './run-control'
 import { makeElement, makeDiv, makeLabel } from './html'
 
@@ -6,7 +7,7 @@ export default class ChangesetStage {
 		makeElement('h2')()(`Authorize`)
 	)
 
-	constructor() {
+	constructor(abortManager: AbortManager) {
 		const $osmWebRootInput=makeElement('input')()()
 		$osmWebRootInput.name='osm-api-root'
 		$osmWebRootInput.required=true
@@ -18,12 +19,27 @@ export default class ChangesetStage {
 
 		const $authCodeInput=makeElement('input')()()
 		$authCodeInput.name='auth-code'
+		const $authCodeButton=makeElement('button')()(`Accept code`)
+		$authCodeButton.type='button'
+
+		const $authCodeControls=makeElement('fieldset')()(
+			makeDiv('input-group')(
+				makeLabel()(
+					`Authorization code`, $authCodeInput
+				)
+			),
+			makeDiv('input-group')(
+				$authCodeButton
+			)
+		)
+		$authCodeControls.hidden=true
 
 		const runControl=new RunControl(
 			`Authorize`,
 			`Abort authorization`,
 			`Authorization log`
 		)
+		abortManager.addRunControl(runControl)
 
 		const $form=makeElement('form')()(
 			makeDiv('input-group')(
@@ -36,18 +52,15 @@ export default class ChangesetStage {
 					`Application client id`, $authClientIdInput
 				)
 			),
-			makeDiv('input-group')(
-				makeLabel()(
-					`Authorization code`, $authCodeInput
-				)
-			),
-			runControl.$widget
+			runControl.$widget,
+			$authCodeControls
 		)
 
 		$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			runControl.logger.clear()
-			if (!$authCodeInput.value) {
+			const abortSignal=abortManager.enterStage(runControl)
+			try {
 				const codeVerifier=getCodeVerifier()
 				const codeChallenge=await getCodeChallenge(codeVerifier)
 				const width=600
@@ -62,12 +75,29 @@ export default class ChangesetStage {
 					['code_challenge_method','S256']
 				])
 				runControl.logger.appendText(`open ${urlStart} in a window`)
-				const loginWindow=open(url,'_blank',
-					`width=${width},height=${height},left=${screen.width/2-width/2},top=${screen.height/2-height/2}`
-				)
-				// if (loginWindow==null) return
-			} else {
+				{
+					const authWindow=open(url,'_blank',
+						`width=${width},height=${height},left=${screen.width/2-width/2},top=${screen.height/2-height/2}`
+					)
+					if (!authWindow) throw new TypeError(`failed to open auth window`)
+					try {
+						$authCodeControls.hidden=false
+						await new Promise((resolve,reject)=>{
+							$authCodeButton.onclick=resolve
+							abortSignal.onabort=reject
+						})
+					} finally {
+						$authCodeControls.hidden=true
+						authWindow.close()
+						$authCodeButton.onclick=null
+						abortSignal.onabort=null
+					}
+				}
+				console.log(`received code ${$authCodeInput.value}`)
+			} catch (ex) {
+				console.log(ex)
 			}
+			abortManager.exitStage()
 		}
 
 		this.$section.append($form)
