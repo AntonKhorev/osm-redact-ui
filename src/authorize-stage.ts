@@ -61,21 +61,23 @@ export default class ChangesetStage {
 			runControl.logger.clear()
 			const abortSignal=abortManager.enterStage(runControl)
 			try {
+				const clientId=$authClientIdInput.value
+				const redirectUri='urn:ietf:wg:oauth:2.0:oob'
 				const codeVerifier=getCodeVerifier()
 				const codeChallenge=await getCodeChallenge(codeVerifier)
-				const width=600
-				const height=600
-				const urlStart=`${$osmWebRootInput.value}oauth2/authorize`
-				const url=urlStart+`?`+new URLSearchParams([
-					['client_id',$authClientIdInput.value],
-					['redirect_uri','urn:ietf:wg:oauth:2.0:oob'],
-					['scope','read_prefs write_redactions'],
-					['response_type','code'],
-					['code_challenge',codeChallenge],
-					['code_challenge_method','S256']
-				])
-				runControl.logger.appendText(`open ${urlStart} in a window`)
 				{
+					const width=600
+					const height=600
+					const urlStart=`${$osmWebRootInput.value}oauth2/authorize`
+					const url=urlStart+`?`+new URLSearchParams([
+						['client_id',clientId],
+						['redirect_uri',redirectUri],
+						['scope','read_prefs write_redactions'],
+						['response_type','code'],
+						['code_challenge',codeChallenge],
+						['code_challenge_method','S256']
+					])
+					runControl.logger.appendText(`open ${urlStart} in a window`)
 					const authWindow=open(url,'_blank',
 						`width=${width},height=${height},left=${screen.width/2-width/2},top=${screen.height/2-height/2}`
 					)
@@ -93,7 +95,25 @@ export default class ChangesetStage {
 						abortSignal.onabort=null
 					}
 				}
-				console.log(`received code ${$authCodeInput.value}`)
+				{
+					const code=$authCodeInput.value
+					const url=`${$osmWebRootInput.value}oauth2/token`
+					runControl.logger.appendText(`POST ${url}`)
+					const response=await fetch(url,{
+						signal: abortSignal,
+						method: 'POST',
+						body: new URLSearchParams([
+							['client_id',clientId],
+							['redirect_uri',redirectUri],
+							['grant_type','authorization_code'],
+							['code',code],
+							['code_verifier',codeVerifier]
+						])
+					})
+					if (!response.ok) throw new TypeError(`failed to fetch token`)
+					const json=await response.json()
+					console.log(`received token`,json)
+				}
 			} catch (ex) {
 				console.log(ex)
 			}
