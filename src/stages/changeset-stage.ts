@@ -1,12 +1,12 @@
 import ElementsStage from './elements-stage'
-import RunControl from './run-control'
-import AbortManager from './abort-manager'
-import OsmApi from './osm-api'
-import { OsmConnection } from './osm-connection'
-import type { OsmElementType } from './osm-element-collection'
-import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-collection'
-import { makeElement, makeDiv, makeLabel } from './html'
-import { isObject, isArray, toPositiveInteger } from './types'
+import RunControl from '../run-control'
+import AbortManager from '../abort-manager'
+import OsmApi from '../osm-api'
+import { OsmConnection } from '../osm-connection'
+import type { OsmElementType } from '../osm-element-collection'
+import { isOsmElementType, OsmElementLowerVersionCollection } from '../osm-element-collection'
+import { makeElement, makeDiv, makeLabel } from '../html'
+import { isObject, isArray, toPositiveInteger } from '../types'
 
 export default class ChangesetStage {
 	private osmConnection?: OsmConnection

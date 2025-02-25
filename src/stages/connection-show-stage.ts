@@ -1,6 +1,6 @@
 import ChangesetStage from './changeset-stage'
-import { OsmConnection } from './osm-connection'
-import { makeElement, makeLink } from './html'
+import { OsmConnection } from '../osm-connection'
+import { makeElement, makeLink } from '../html'
 
 export default class ConnectionShowStage {
 	private $notConnectedMessage=makeElement('p')()(`Not connected`)

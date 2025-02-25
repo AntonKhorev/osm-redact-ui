@@ -2,7 +2,7 @@ import AuthSkipStage from './auth-skip-stage'
 import AuthTokenStage from './auth-token-stage'
 import AuthManualGrantStage from './auth-manual-grant-stage'
 import AuthAutoGrantStage from './auth-auto-grant-stage'
-import { makeElement, makeDiv, makeLabel } from './html'
+import { makeElement, makeDiv, makeLabel } from '../html'
 
 export default class AuthTypeSelectStage {
 	private $authTypeSelect=makeElement('select')()()

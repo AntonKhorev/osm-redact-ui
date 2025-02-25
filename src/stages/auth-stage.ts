@@ -1,10 +1,10 @@
 import ConnectionShowStage from './connection-show-stage'
-import RunControl from './run-control'
-import AuthFlowFactory from './auth-flow-factory'
-import { OsmConnection } from './osm-connection'
-import OsmApi from './osm-api'
-import { makeElement, makeDiv, makeLabel } from './html'
-import { isObject, isArrayOfStrings } from './types'
+import RunControl from '../run-control'
+import AuthFlowFactory from '../auth-flow-factory'
+import { OsmConnection } from '../osm-connection'
+import OsmApi from '../osm-api'
+import { makeElement, makeDiv, makeLabel } from '../html'
+import { isObject, isArrayOfStrings } from '../types'
 
 export default abstract class AuthStage {
 	protected authFlowFactory=new AuthFlowFactory

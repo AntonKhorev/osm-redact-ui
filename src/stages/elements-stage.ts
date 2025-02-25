@@ -1,10 +1,10 @@
-import RunControl from './run-control'
-import AbortManager from './abort-manager'
-import OsmApi from './osm-api'
-import { OsmConnection } from './osm-connection'
-import { isOsmElementType } from './osm-element-collection'
-import { makeElement, makeDiv, makeLabel } from './html'
-import { toPositiveInteger } from './types'
+import RunControl from '../run-control'
+import AbortManager from '../abort-manager'
+import OsmApi from '../osm-api'
+import { OsmConnection } from '../osm-connection'
+import { isOsmElementType } from '../osm-element-collection'
+import { makeElement, makeDiv, makeLabel } from '../html'
+import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
 	private osmConnection?: OsmConnection
