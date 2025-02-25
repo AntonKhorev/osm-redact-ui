@@ -1,5 +1,6 @@
 import AuthStage from './auth-stage'
 import ConnectionShowStage from './connection-show-stage'
+import PopupWindowOpener from './popup-window-opener'
 import AbortManager from './abort-manager'
 import { makeElement, makeDiv, makeLabel } from './html'
 import { isObject } from './types'
@@ -8,7 +9,7 @@ export default class AuthCodeStage extends AuthStage {
 	private $authClientIdInput=makeElement('input')()()
 	private $authCodeControls=makeElement('fieldset')()()
 
-	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage) {
+	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener) {
 		super()
 
 		abortManager.addRunControl(this.runControl)
@@ -44,15 +45,10 @@ export default class AuthCodeStage extends AuthStage {
 					'urn:ietf:wg:oauth:2.0:oob'
 				)
 				{
-					const width=600
-					const height=600
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
 					this.runControl.logger.appendText(`open browser window ${urlStart}`)
-					const authWindow=open(url,'_blank',
-						`width=${width},height=${height},left=${screen.width/2-width/2},top=${screen.height/2-height/2}`
-					)
-					if (!authWindow) throw new TypeError(`failed to open auth window`)
+					const authWindow=popupWindowOpener.open(url)
 					try {
 						this.$authCodeControls.hidden=false
 						await new Promise((resolve,reject)=>{

@@ -7,6 +7,7 @@ import AuthAutoStage from './auth-auto-stage'
 import ConnectionShowStage from './connection-show-stage'
 import ChangesetStage from './changeset-stage'
 import ElementsStage from './elements-stage'
+import PopupWindowOpener from './popup-window-opener'
 import AbortManager from './abort-manager'
 import { makeElement } from './html'
 
@@ -16,6 +17,7 @@ function main(): void {
 	const authLanding=new AuthLanding
 	if (authLanding.land()) return
 
+	const popupWindowOpener=new PopupWindowOpener
 	const abortManager=new AbortManager
 
 	const elementsStage=new ElementsStage(abortManager)
@@ -23,8 +25,8 @@ function main(): void {
 	const connectionShowStage=new ConnectionShowStage(changesetStage)
 	const authSkipStage=new AuthSkipStage(abortManager,connectionShowStage)
 	const authTokenStage=new AuthTokenStage(abortManager,connectionShowStage)
-	const authCodeStage=new AuthCodeStage(abortManager,connectionShowStage)
-	const authAutoStage=new AuthAutoStage(abortManager,connectionShowStage,authLanding)
+	const authCodeStage=new AuthCodeStage(abortManager,connectionShowStage,popupWindowOpener)
+	const authAutoStage=new AuthAutoStage(abortManager,connectionShowStage,popupWindowOpener,authLanding)
 	const authTypeSelectStage=new AuthTypeSelectStage(authSkipStage,authTokenStage,authCodeStage,authAutoStage)
 
 	authTypeSelectStage.render()

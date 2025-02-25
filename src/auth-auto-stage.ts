@@ -1,8 +1,9 @@
 // TODO: remove copypaste from auth-code-stage
 
 import AuthStage from './auth-stage'
-import AuthLanding from './auth-landing'
 import ConnectionShowStage from './connection-show-stage'
+import AuthLanding from './auth-landing'
+import PopupWindowOpener from './popup-window-opener'
 import AbortManager from './abort-manager'
 import { makeElement, makeDiv, makeLabel } from './html'
 import { isObject } from './types'
@@ -10,7 +11,7 @@ import { isObject } from './types'
 export default class AuthAutoStage extends AuthStage {
 	private $authClientIdInput=makeElement('input')()()
 
-	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, authLanding: AuthLanding) {
+	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener, authLanding: AuthLanding) {
 		super()
 
 		abortManager.addRunControl(this.runControl)
@@ -35,15 +36,10 @@ export default class AuthAutoStage extends AuthStage {
 				)
 				let code: string
 				{
-					const width=600
-					const height=600
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
 					this.runControl.logger.appendText(`open browser window ${urlStart}`)
-					const authWindow=open(url,'_blank',
-						`width=${width},height=${height},left=${screen.width/2-width/2},top=${screen.height/2-height/2}`
-					)
-					if (!authWindow) throw new TypeError(`failed to open auth window`)
+					const authWindow=popupWindowOpener.open(url)
 					try {
 						code=await authLanding.getCode(abortSignal) // TODO: reject on popup close, can't use authWindow.onclose
 					} finally {
