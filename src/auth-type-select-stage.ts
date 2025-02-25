@@ -1,7 +1,7 @@
 import AuthSkipStage from './auth-skip-stage'
 import AuthTokenStage from './auth-token-stage'
-import AuthCodeStage from './auth-code-stage'
-import AuthAutoStage from './auth-auto-stage'
+import AuthManualGrantStage from './auth-manual-grant-stage'
+import AuthAutoGrantStage from './auth-auto-grant-stage'
 import { makeElement, makeDiv, makeLabel } from './html'
 
 export default class AuthTypeSelectStage {
@@ -15,8 +15,8 @@ export default class AuthTypeSelectStage {
 	constructor(
 		authSkipStage: AuthSkipStage,
 		authTokenStage: AuthTokenStage,
-		authCodeStage: AuthCodeStage,
-		authAutoStage: AuthAutoStage
+		authManualGrantStage: AuthManualGrantStage,
+		authAutoGrantStage: AuthAutoGrantStage
 	) {
 		this.$authTypeSelect.append(
 			new Option(`skipped`,'skip'),
@@ -28,8 +28,8 @@ export default class AuthTypeSelectStage {
 		const updateAuthStagesVisibility=()=>{
 			authSkipStage.$section.hidden=this.$authTypeSelect.value!='skip'
 			authTokenStage.$section.hidden=this.$authTypeSelect.value!='token'
-			authCodeStage.$section.hidden=this.$authTypeSelect.value!='code'
-			authAutoStage.$section.hidden=this.$authTypeSelect.value!='auto'
+			authManualGrantStage.$section.hidden=this.$authTypeSelect.value!='code'
+			authAutoGrantStage.$section.hidden=this.$authTypeSelect.value!='auto'
 		}
 		updateAuthStagesVisibility()
 		this.$authTypeSelect.oninput=updateAuthStagesVisibility

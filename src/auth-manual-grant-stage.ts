@@ -1,23 +1,38 @@
-// TODO: remove copypaste from auth-code-stage
-
 import AuthStage from './auth-stage'
 import ConnectionShowStage from './connection-show-stage'
-import AuthLanding from './auth-landing'
 import PopupWindowOpener from './popup-window-opener'
 import AbortManager from './abort-manager'
 import { makeElement, makeDiv, makeLabel } from './html'
 import { isObject } from './types'
 
-export default class AuthAutoStage extends AuthStage {
+export default class AuthManualGrantStage extends AuthStage {
 	private $authClientIdInput=makeElement('input')()()
+	private $authCodeControls=makeElement('fieldset')()()
 
-	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener, authLanding: AuthLanding) {
+	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener) {
 		super()
 
 		abortManager.addRunControl(this.runControl)
 
 		this.$authClientIdInput.name='auth-client-id'
 		this.$authClientIdInput.required=true
+
+		const $authCodeInput=makeElement('input')()()
+		$authCodeInput.name='auth-code'
+		const $authCodeButton=makeElement('button')()(`Accept code`)
+		$authCodeButton.type='button'
+
+		this.$authCodeControls.append(
+			makeDiv('input-group')(
+				makeLabel()(
+					`Authorization code`, $authCodeInput
+				)
+			),
+			makeDiv('input-group')(
+				$authCodeButton
+			)
+		)
+		this.$authCodeControls.hidden=true
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
@@ -27,19 +42,24 @@ export default class AuthAutoStage extends AuthStage {
 				const osmWebRoot=this.$osmWebRootInput.value.trim()
 				const authFlow=await this.authFlowFactory.makeAuthFlow(
 					this.$authClientIdInput.value.trim(),
-					authLanding.url
+					'urn:ietf:wg:oauth:2.0:oob'
 				)
-				let code: string
 				{
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
 					this.runControl.logger.appendText(`open browser window ${urlStart}`)
 					const authWindow=popupWindowOpener.open(url)
 					try {
-						code=await authLanding.getCode(abortSignal) // TODO: reject on popup close, can't use authWindow.onclose
+						this.$authCodeControls.hidden=false
+						await new Promise((resolve,reject)=>{
+							$authCodeButton.onclick=resolve
+							abortSignal.onabort=reject
+						})
 					} finally {
+						this.$authCodeControls.hidden=true
 						authWindow.close()
-						authLanding.cleanupAfterGetCode(abortSignal)
+						$authCodeButton.onclick=null
+						abortSignal.onabort=null
 					}
 				}
 				{
@@ -48,7 +68,9 @@ export default class AuthAutoStage extends AuthStage {
 					const response=await fetch(url,{
 						signal: abortSignal,
 						method: 'POST',
-						body: authFlow.getAccessTokenRequestParams(code)
+						body: authFlow.getAccessTokenRequestParams(
+							$authCodeInput.value.trim()
+						)
 					})
 					if (!response.ok) throw new TypeError(`failed to fetch token`)
 					const json=await response.json()
@@ -59,11 +81,12 @@ export default class AuthAutoStage extends AuthStage {
 				console.log(ex)
 			}
 			abortManager.exitStage()
+			$authCodeInput.value=''
 		}
 	}
 
 	protected renderHeading(): HTMLHeadingElement {
-		return makeElement('h2')()(`Authorize`)
+		return makeElement('h2')()(`Authorize by copying a code`)
 	}
 
 	protected renderPreRunControlWidgets(): HTMLElement[] {
@@ -73,6 +96,12 @@ export default class AuthAutoStage extends AuthStage {
 					`Application client id`, this.$authClientIdInput
 				)
 			)
+		]
+	}
+
+	protected renderPostRunControlWidgets(): HTMLElement[] {
+		return [
+			this.$authCodeControls
 		]
 	}
 }
