@@ -6,7 +6,6 @@ import AuthFlow from '../auth-flow'
 import { makeElement, makeDiv, makeLabel } from '../html'
 
 export default class AuthManualGrantStage extends AuthGrantStage {
-	private $authClientIdInput=makeElement('input')()()
 	private $authCodeForm=makeElement('form')()()
 	private $authCodeInput=makeElement('input')()()
 	private $authCodeButton=makeElement('button')()(`Accept code`)
@@ -16,26 +15,12 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 	) {
 		super(abortManager,connectionShowStage,popupWindowOpener)
 
-		this.$authClientIdInput.name='auth-client-id'
-		this.$authClientIdInput.required=true
-
 		this.$authCodeInput.name='auth-code'
-
 		this.$authCodeForm.hidden=true
 	}
 
 	protected renderHeading(): HTMLHeadingElement {
 		return makeElement('h2')()(`Authorize by copying a code`)
-	}
-
-	protected renderPreRunControlWidgets(): HTMLElement[] {
-		return [
-			makeDiv('input-group')(
-				makeLabel()(
-					`Application client id`, this.$authClientIdInput
-				)
-			)
-		]
 	}
 
 	protected renderPostRunControlWidgets(): HTMLElement[] {
@@ -54,11 +39,8 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 		]
 	}
 
-	protected getAuthFlow(): Promise<AuthFlow> {
-		return this.authFlowFactory.makeAuthFlow(
-			this.$authClientIdInput.value.trim(),
-			'urn:ietf:wg:oauth:2.0:oob'
-		)
+	protected getAuthFlow(clientId: string): Promise<AuthFlow> {
+		return this.authFlowFactory.makeAuthFlow(clientId,'urn:ietf:wg:oauth:2.0:oob')
 	}
 
 	protected async getAuthCode(abortSignal: AbortSignal): Promise<string> {

@@ -4,8 +4,11 @@ import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
 import AuthFlow from '../auth-flow'
 import { isObject } from '../types'
+import { makeElement, makeDiv, makeLabel } from '../html'
 
 export default abstract class AuthGrantStage extends AuthStage {
+	private $clientIdInput=makeElement('input')()()
+
 	constructor(
 		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
 	) {
@@ -13,13 +16,17 @@ export default abstract class AuthGrantStage extends AuthStage {
 
 		abortManager.addRunControl(this.runControl)
 
+		this.$clientIdInput.name='auth-client-id'
+		this.$clientIdInput.required=true
+
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			this.runControl.logger.clear()
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
 				const osmWebRoot=this.$osmWebRootInput.value.trim()
-				const authFlow=await this.getAuthFlow()
+				const clientId=this.$clientIdInput.value.trim()
+				const authFlow=await this.getAuthFlow(clientId)
 				let code: string
 				{
 					const urlStart=`${osmWebRoot}oauth2/authorize`
@@ -53,7 +60,17 @@ export default abstract class AuthGrantStage extends AuthStage {
 		}
 	}
 
-	protected abstract getAuthFlow(): Promise<AuthFlow>
+	protected renderPreRunControlWidgets(): HTMLElement[] {
+		return [
+			makeDiv('input-group')(
+				makeLabel()(
+					`Application client id`, this.$clientIdInput
+				)
+			)
+		]
+	}
+
+	protected abstract getAuthFlow(clientId: string): Promise<AuthFlow>
 	protected abstract getAuthCode(abortSignal: AbortSignal): Promise<string>
 	protected abstract cleanupAfterGetCode(abortSignal: AbortSignal): void
 }
