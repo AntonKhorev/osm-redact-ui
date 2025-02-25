@@ -16,7 +16,7 @@ export default class AuthTokenStage extends AuthStage {
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			this.runControl.logger.clear()
+			this.runLogger.clear()
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
 				const token=this.$tokenInput.value.trim()

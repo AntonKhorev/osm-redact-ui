@@ -1,4 +1,3 @@
-import Logger from "./logger"
 import { makeElement, makeDiv } from "./html"
 
 export default class RunControl {
@@ -8,16 +7,12 @@ export default class RunControl {
 			this.$button
 		)
 	)
-	logger: Logger
 
 	constructor(
 		private normalButtonLabel: string,
-		private abortButtonLabel: string,
-		loggerSummary: string
+		private abortButtonLabel: string
 	) {
 		this.$button.textContent=normalButtonLabel
-		this.logger=new Logger(loggerSummary)
-		this.$widget.append(this.logger.$widget)
 	}
 
 	enterReadyState() {

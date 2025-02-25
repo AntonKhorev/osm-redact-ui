@@ -1,4 +1,5 @@
 import RunControl from '../run-control'
+import RunLogger from '../run-logger'
 import AbortManager from '../abort-manager'
 import OsmApi from '../osm-api'
 import { OsmConnection } from '../osm-connection'
@@ -11,9 +12,9 @@ export default class ElementsStage {
 
 	private runControl=new RunControl(
 		`Redact target elements`,
-		`Abort redacting target elements`,
-		`Redact log`
+		`Abort redacting target elements`
 	)
+	private runLogger=new RunLogger(`Redact log`)
 
 	$expectedChangesCountOutput=makeElement('output')()()
 	$downloadedChangesCountOutput=makeElement('output')()()
@@ -41,7 +42,7 @@ export default class ElementsStage {
 			if (!this.osmConnection) return
 			const abortSignal=abortManager.enterStage(this.runControl)
 			const authToken=this.osmConnection.user?this.osmConnection.user.token:''
-			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runControl.logger,abortSignal)
+			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runLogger,abortSignal)
 			try {
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
@@ -96,13 +97,16 @@ export default class ElementsStage {
 			this.runControl.$widget
 		)
 
-		this.$section.append(this.$form)
+		this.$section.append(
+			this.$form,
+			this.runLogger.$widget
+		)
 	}
 
 	clear() {
 		this.osmConnection=undefined
 		this.runControl.$widget.hidden=true
-		this.runControl.logger.clear()
+		this.runLogger.clear()
 		this.$expectedChangesCountOutput.value=''
 		this.$downloadedChangesCountOutput.value=''
 		this.$targetTextarea.value=''

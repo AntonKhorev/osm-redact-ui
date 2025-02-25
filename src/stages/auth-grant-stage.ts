@@ -21,7 +21,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			this.runControl.logger.clear()
+			this.runLogger.clear()
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
 				const osmWebRoot=this.$osmWebRootInput.value.trim()
@@ -31,7 +31,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 				{
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					this.runControl.logger.appendText(`open browser window ${urlStart}`)
+					this.runLogger.appendText(`open browser window ${urlStart}`)
 					const authWindow=popupWindowOpener.open(url)
 					try {
 						code=await this.getAuthCode(abortSignal)
@@ -42,7 +42,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 				}
 				{
 					const url=`${osmWebRoot}oauth2/token`
-					this.runControl.logger.appendText(`POST ${url}`)
+					this.runLogger.appendText(`POST ${url}`)
 					const response=await fetch(url,{
 						signal: abortSignal,
 						method: 'POST',

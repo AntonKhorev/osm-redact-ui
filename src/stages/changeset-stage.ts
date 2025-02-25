@@ -1,5 +1,6 @@
 import ElementsStage from './elements-stage'
 import RunControl from '../run-control'
+import RunLogger from '../run-logger'
 import AbortManager from '../abort-manager'
 import OsmApi from '../osm-api'
 import { OsmConnection } from '../osm-connection'
@@ -13,9 +14,9 @@ export default class ChangesetStage {
 
 	private runControl=new RunControl(
 		`Fetch target elements`,
-		`Abort fetching target elements`,
-		`Fetch log`
+		`Abort fetching target elements`
 	)
+	private runLogger=new RunLogger(`Fetch log`)
 
 	private $redactedChangesetInput=makeElement('input')()()
 	protected $form=makeElement('form')()()
@@ -34,11 +35,11 @@ export default class ChangesetStage {
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			if (!this.osmConnection) return
-			this.runControl.logger.clear()
+			this.runLogger.clear()
 			elementsStage.clear()
 			const abortSignal=abortManager.enterStage(this.runControl)
 			const authToken=this.osmConnection.user?this.osmConnection.user.token:''
-			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runControl.logger,abortSignal)
+			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runLogger,abortSignal)
 			try {
 				let expectedChangesCount: number
 				{
@@ -106,7 +107,10 @@ export default class ChangesetStage {
 			this.runControl.$widget
 		)
 
-		this.$section.append(this.$form)
+		this.$section.append(
+			this.$form,
+			this.runLogger.$widget
+		)
 	}
 
 	setReadyState(osmConnection: OsmConnection) {

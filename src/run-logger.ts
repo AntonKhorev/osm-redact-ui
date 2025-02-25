@@ -1,6 +1,6 @@
 import { makeElement, makeLink } from "./html"
 
-export default class Logger {
+export default class RunLogger {
 	private $list=makeElement('ul')()()
 	private $summary=makeElement('summary')()()
 	$widget=makeElement('details')()(

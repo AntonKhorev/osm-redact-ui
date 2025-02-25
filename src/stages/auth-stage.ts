@@ -1,5 +1,6 @@
 import ConnectionShowStage from './connection-show-stage'
 import RunControl from '../run-control'
+import RunLogger from '../run-logger'
 import AuthFlowFactory from '../auth-flow-factory'
 import { OsmConnection } from '../osm-connection'
 import OsmApi from '../osm-api'
@@ -11,9 +12,9 @@ export default abstract class AuthStage {
 	
 	protected runControl=new RunControl(
 		`Authorize`,
-		`Abort authorization`,
-		`Authorization log`
+		`Abort authorization`
 	)
+	protected runLogger=new RunLogger(`Authorization log`)
 
 	protected $osmWebRootInput=makeElement('input')()()
 	protected $osmApiRootInput=makeElement('input')()()
@@ -50,6 +51,7 @@ export default abstract class AuthStage {
 		this.$section.append(
 			this.renderHeading(),
 			this.$form,
+			this.runLogger.$widget,
 			...this.renderPostRunControlWidgets()
 		)
 	}
@@ -70,7 +72,7 @@ export default abstract class AuthStage {
 			apiRoot: this.$osmApiRootInput.value.trim(),
 		}
 		if (token) {
-			const osmApi=new OsmApi(osmConnection.apiRoot,token,this.runControl.logger,abortSignal)
+			const osmApi=new OsmApi(osmConnection.apiRoot,token,this.runLogger,abortSignal)
 			const response=await osmApi.get(`user/details.json`)
 			if (!response.ok) throw new TypeError(`failed to fetch user details`)
 			const json=await response.json()
