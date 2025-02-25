@@ -3,7 +3,7 @@ import { makeElement, makeLink } from "./html"
 export default class RunLogger {
 	private $list=makeElement('ul')()()
 	private $summary=makeElement('summary')()()
-	$widget=makeElement('details')()(
+	$widget=makeElement('details')('log')(
 		this.$summary,
 		this.$list
 	)
