@@ -1,25 +1,13 @@
 import RunControl from './run-control'
 import AbortManager from './abort-manager'
 import OsmApi from './osm-api'
+import { OsmConnection } from './osm-connection'
 import { isOsmElementType } from './osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from './html'
 import { toPositiveInteger } from './types'
 
-type ReadyState = {
-	apiRoot: string
-	authToken: string
-}
-
 export default class ElementsStage {
-	private readyState?: ReadyState
-
-	$expectedChangesCountOutput=makeElement('output')()()
-	$downloadedChangesCountOutput=makeElement('output')()()
-	$targetTextarea=makeElement('textarea')()()
-
-	$section=makeElement('section')()(
-		makeElement('h2')()(`See target elements`)
-	)
+	private osmConnection?: OsmConnection
 
 	private runControl=new RunControl(
 		`Redact target elements`,
@@ -27,42 +15,33 @@ export default class ElementsStage {
 		`Redact log`
 	)
 
+	$expectedChangesCountOutput=makeElement('output')()()
+	$downloadedChangesCountOutput=makeElement('output')()()
+	$targetTextarea=makeElement('textarea')()()
+
+	private $redactionInput=makeElement('input')()()
+	protected $form=makeElement('form')()()
+
+	$section=makeElement('section')()(
+		makeElement('h2')()(`See target elements`)
+	)
+
 	constructor(abortManager: AbortManager) {
 		this.$targetTextarea.rows=10
 		this.$targetTextarea.name='osm-elements-to-redact'
 		
-		const $redactionInput=makeElement('input')()()
-		$redactionInput.name='redaction-id'
-		$redactionInput.required=true
+		this.$redactionInput.name='redaction-id'
+		this.$redactionInput.required=true
 
 		this.runControl.$widget.hidden=true
 		abortManager.addRunControl(this.runControl)
 
-		const $form=makeElement('form')()(
-			makeDiv('output-group')(
-				`Expected changes count: `,this.$expectedChangesCountOutput
-			),
-			makeDiv('output-group')(
-				`Downloaded changes count: `,this.$downloadedChangesCountOutput
-			),
-			makeDiv('input-group')(
-				makeLabel()(
-					`Elements to redact `,this.$targetTextarea
-				)
-			),
-			makeDiv('input-group')(
-				makeLabel()(
-					`Redaction id `,$redactionInput
-				)
-			),
-			this.runControl.$widget
-		)
-
-		$form.onsubmit=async(ev)=>{
+		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			if (!this.readyState) return
+			if (!this.osmConnection) return
 			const abortSignal=abortManager.enterStage(this.runControl)
-			const osmApi=new OsmApi(this.readyState.apiRoot,this.readyState.authToken,this.runControl.logger,abortSignal)
+			const authToken=this.osmConnection.user?this.osmConnection.user.token:''
+			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runControl.logger,abortSignal)
 			try {
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
@@ -81,7 +60,7 @@ export default class ElementsStage {
 						}
 						if (redactedElementWithVersion!=null) {
 							const response=await osmApi.post(
-								`${redactedElementWithVersion}/redaction?redaction=${encodeURIComponent($redactionInput.value)}`
+								`${redactedElementWithVersion}/redaction?redaction=${encodeURIComponent(this.$redactionInput.value)}`
 							)
 							if (!response.ok) throw new TypeError(`failed to redact element version`)
 						}
@@ -94,12 +73,34 @@ export default class ElementsStage {
 			// TODO: post-check if top versions match
 			abortManager.exitStage()
 		}
+	}
 
-		this.$section.append($form)
+	render() {
+		this.$form.append(
+			makeDiv('output-group')(
+				`Expected changes count: `,this.$expectedChangesCountOutput
+			),
+			makeDiv('output-group')(
+				`Downloaded changes count: `,this.$downloadedChangesCountOutput
+			),
+			makeDiv('input-group')(
+				makeLabel()(
+					`Elements to redact `,this.$targetTextarea
+				)
+			),
+			makeDiv('input-group')(
+				makeLabel()(
+					`Redaction id `,this.$redactionInput
+				)
+			),
+			this.runControl.$widget
+		)
+
+		this.$section.append(this.$form)
 	}
 
 	clear() {
-		this.readyState=undefined
+		this.osmConnection=undefined
 		this.runControl.$widget.hidden=true
 		this.runControl.logger.clear()
 		this.$expectedChangesCountOutput.value=''
@@ -107,11 +108,8 @@ export default class ElementsStage {
 		this.$targetTextarea.value=''
 	}
 
-	setReadyState(
-		apiRoot: string,
-		authToken: string
-	) {
-		this.readyState={apiRoot,authToken}
+	setReadyState(osmConnection: OsmConnection) {
+		this.osmConnection=osmConnection
 		this.runControl.$widget.hidden=false
 	}
 }

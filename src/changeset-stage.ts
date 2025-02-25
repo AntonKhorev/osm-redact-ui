@@ -2,67 +2,48 @@ import ElementsStage from './elements-stage'
 import RunControl from './run-control'
 import AbortManager from './abort-manager'
 import OsmApi from './osm-api'
+import { OsmConnection } from './osm-connection'
 import type { OsmElementType } from './osm-element-collection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from './osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from './html'
 import { isObject, isArray, toPositiveInteger } from './types'
 
 export default class ChangesetStage {
+	private osmConnection?: OsmConnection
+
+	private runControl=new RunControl(
+		`Fetch target elements`,
+		`Abort fetching target elements`,
+		`Fetch log`
+	)
+
+	private $redactedChangesetInput=makeElement('input')()()
+	protected $form=makeElement('form')()()
+
 	$section=makeElement('section')()(
-		makeElement('h2')()(`Enter initial information`)
+		makeElement('h2')()(`Select target changeset`)
 	)
 
 	constructor(abortManager: AbortManager, elementsStage: ElementsStage) {
-		const $osmApiRootInput=makeElement('input')()()
-		$osmApiRootInput.name='osm-api-root'
-		$osmApiRootInput.required=true
-		$osmApiRootInput.value=`http://127.0.0.1:3000/`
+		this.$redactedChangesetInput.name='redacted-changeset'
+		this.$redactedChangesetInput.required=true
 	
-		const $tokenInput=makeElement('input')()()
-		$tokenInput.name='auth-token'
-		// $tokenInput.required=true
+		this.runControl.$widget.hidden=true
+		abortManager.addRunControl(this.runControl)
 	
-		const $redactedChangesetInput=makeElement('input')()()
-		$redactedChangesetInput.name='redacted-changeset'
-		$redactedChangesetInput.required=true
-	
-		const runControl=new RunControl(
-			`Fetch target elements`,
-			`Abort fetching target elements`,
-			`Fetch log`
-		)
-		abortManager.addRunControl(runControl)
-	
-		const $form=makeElement('form')()(
-			makeDiv('input-group')(
-				makeLabel()(
-					`OSM API url`, $osmApiRootInput
-				)
-			),
-			makeDiv('input-group')(
-				makeLabel()(
-					`Auth token`, $tokenInput
-				)
-			),
-			makeDiv('input-group')(
-				makeLabel()(
-					`Redacted changeset`, $redactedChangesetInput
-				)
-			),
-			runControl.$widget
-		)
-
-		$form.onsubmit=async(ev)=>{
+		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			runControl.logger.clear()
+			if (!this.osmConnection) return
+			this.runControl.logger.clear()
 			elementsStage.clear()
-			const abortSignal=abortManager.enterStage(runControl)
-			const osmApi=new OsmApi($osmApiRootInput.value,$tokenInput.value,runControl.logger,abortSignal)
+			const abortSignal=abortManager.enterStage(this.runControl)
+			const authToken=this.osmConnection.user?this.osmConnection.user.token:''
+			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runControl.logger,abortSignal)
 			try {
 				let expectedChangesCount: number
 				{
 					const response=await osmApi.get(
-						`changeset/${encodeURIComponent($redactedChangesetInput.value)}.json`
+						`changeset/${encodeURIComponent(this.$redactedChangesetInput.value)}.json`
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
 					const json=await response.json()
@@ -74,7 +55,7 @@ export default class ChangesetStage {
 				const startingVersions=new OsmElementLowerVersionCollection
 				{
 					const response=await osmApi.get(
-						`changeset/${encodeURIComponent($redactedChangesetInput.value)}/download?show_redactions=true`
+						`changeset/${encodeURIComponent(this.$redactedChangesetInput.value)}/download?show_redactions=true`
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
 					const text=await response.text()
@@ -107,14 +88,30 @@ export default class ChangesetStage {
 				for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
 					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
 				}
-				elementsStage.setReadyState($osmApiRootInput.value,$tokenInput.value)
+				elementsStage.setReadyState(this.osmConnection)
 			} catch (ex) {
 				console.log(ex)
 			}
 			abortManager.exitStage()
 		}
+	}
 
-		this.$section.append($form)
+	render() {
+		this.$form.append(
+			makeDiv('input-group')(
+				makeLabel()(
+					`Redacted changeset`, this.$redactedChangesetInput
+				)
+			),
+			this.runControl.$widget
+		)
+
+		this.$section.append(this.$form)
+	}
+
+	setReadyState(osmConnection: OsmConnection) {
+		this.osmConnection=osmConnection
+		this.runControl.$widget.hidden=false
 	}
 }
 
