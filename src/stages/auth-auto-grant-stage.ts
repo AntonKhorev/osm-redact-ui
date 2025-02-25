@@ -1,65 +1,22 @@
-// TODO: remove copypaste from auth-code-stage
-
-import AuthStage from './auth-stage'
+import AuthGrantStage from './auth-grant-stage'
 import ConnectionShowStage from './connection-show-stage'
 import AuthLanding from '../auth-landing'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
+import AuthFlow from '../auth-flow'
 import { makeElement, makeDiv, makeLabel } from '../html'
-import { isObject } from '../types'
 
-export default class AuthAutoGrantStage extends AuthStage {
+export default class AuthAutoGrantStage extends AuthGrantStage {
 	private $authClientIdInput=makeElement('input')()()
 
-	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener, authLanding: AuthLanding) {
-		super()
-
-		abortManager.addRunControl(this.runControl)
+	constructor(
+		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener,
+		private authLanding: AuthLanding
+	) {
+		super(abortManager,connectionShowStage,popupWindowOpener)
 
 		this.$authClientIdInput.name='auth-client-id'
 		this.$authClientIdInput.required=true
-
-		this.$form.onsubmit=async(ev)=>{
-			ev.preventDefault()
-			this.runControl.logger.clear()
-			const abortSignal=abortManager.enterStage(this.runControl)
-			try {
-				const osmWebRoot=this.$osmWebRootInput.value.trim()
-				const authFlow=await this.authFlowFactory.makeAuthFlow(
-					this.$authClientIdInput.value.trim(),
-					authLanding.url
-				)
-				let code: string
-				{
-					const urlStart=`${osmWebRoot}oauth2/authorize`
-					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					this.runControl.logger.appendText(`open browser window ${urlStart}`)
-					const authWindow=popupWindowOpener.open(url)
-					try {
-						code=await authLanding.getCode(abortSignal) // TODO: reject on popup close, can't use authWindow.onclose
-					} finally {
-						authWindow.close()
-						authLanding.cleanupAfterGetCode(abortSignal)
-					}
-				}
-				{
-					const url=`${osmWebRoot}oauth2/token`
-					this.runControl.logger.appendText(`POST ${url}`)
-					const response=await fetch(url,{
-						signal: abortSignal,
-						method: 'POST',
-						body: authFlow.getAccessTokenRequestParams(code)
-					})
-					if (!response.ok) throw new TypeError(`failed to fetch token`)
-					const json=await response.json()
-					const token=getTokenFromTokenResponseJson(json)
-					await this.passToken(connectionShowStage,abortSignal,token)
-				}
-			} catch (ex) {
-				console.log(ex)
-			}
-			abortManager.exitStage()
-		}
 	}
 
 	protected renderHeading(): HTMLHeadingElement {
@@ -75,15 +32,19 @@ export default class AuthAutoGrantStage extends AuthStage {
 			)
 		]
 	}
-}
 
-function getTokenFromTokenResponseJson(json: unknown): string {
-	if (
-		isObject(json) && 'access_token' in json &&
-		typeof json.access_token == 'string'
-	) {
-		return json.access_token
-	} else {
-		throw new TypeError(`received invalid token`)
+	protected getAuthFlow(): Promise<AuthFlow> {
+		return this.authFlowFactory.makeAuthFlow(
+			this.$authClientIdInput.value.trim(),
+			this.authLanding.url
+		)
+	}
+
+	protected getAuthCode(abortSignal: AbortSignal): Promise<string> {
+		return this.authLanding.getCode(abortSignal)
+	}
+
+	protected cleanupAfterGetCode(abortSignal: AbortSignal): void {
+		this.authLanding.cleanupAfterGetCode(abortSignal)
 	}
 }

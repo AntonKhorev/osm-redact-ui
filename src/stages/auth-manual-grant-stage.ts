@@ -1,88 +1,28 @@
-import AuthStage from './auth-stage'
+import AuthGrantStage from './auth-grant-stage'
 import ConnectionShowStage from './connection-show-stage'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
+import AuthFlow from '../auth-flow'
 import { makeElement, makeDiv, makeLabel } from '../html'
-import { isObject } from '../types'
 
-export default class AuthManualGrantStage extends AuthStage {
+export default class AuthManualGrantStage extends AuthGrantStage {
 	private $authClientIdInput=makeElement('input')()()
 	private $authCodeControls=makeElement('fieldset')()()
+	private $authCodeInput=makeElement('input')()()
+	private $authCodeButton=makeElement('button')()(`Accept code`)
 
-	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener) {
-		super()
-
-		abortManager.addRunControl(this.runControl)
+	constructor(
+		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
+	) {
+		super(abortManager,connectionShowStage,popupWindowOpener)
 
 		this.$authClientIdInput.name='auth-client-id'
 		this.$authClientIdInput.required=true
 
-		const $authCodeInput=makeElement('input')()()
-		$authCodeInput.name='auth-code'
-		const $authCodeButton=makeElement('button')()(`Accept code`)
-		$authCodeButton.type='button'
+		this.$authCodeInput.name='auth-code'
+		this.$authCodeButton.type='button'
 
-		this.$authCodeControls.append(
-			makeDiv('input-group')(
-				makeLabel()(
-					`Authorization code`, $authCodeInput
-				)
-			),
-			makeDiv('input-group')(
-				$authCodeButton
-			)
-		)
 		this.$authCodeControls.hidden=true
-
-		this.$form.onsubmit=async(ev)=>{
-			ev.preventDefault()
-			this.runControl.logger.clear()
-			const abortSignal=abortManager.enterStage(this.runControl)
-			try {
-				const osmWebRoot=this.$osmWebRootInput.value.trim()
-				const authFlow=await this.authFlowFactory.makeAuthFlow(
-					this.$authClientIdInput.value.trim(),
-					'urn:ietf:wg:oauth:2.0:oob'
-				)
-				{
-					const urlStart=`${osmWebRoot}oauth2/authorize`
-					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					this.runControl.logger.appendText(`open browser window ${urlStart}`)
-					const authWindow=popupWindowOpener.open(url)
-					try {
-						this.$authCodeControls.hidden=false
-						await new Promise((resolve,reject)=>{
-							$authCodeButton.onclick=resolve
-							abortSignal.onabort=reject
-						})
-					} finally {
-						this.$authCodeControls.hidden=true
-						authWindow.close()
-						$authCodeButton.onclick=null
-						abortSignal.onabort=null
-					}
-				}
-				{
-					const url=`${osmWebRoot}oauth2/token`
-					this.runControl.logger.appendText(`POST ${url}`)
-					const response=await fetch(url,{
-						signal: abortSignal,
-						method: 'POST',
-						body: authFlow.getAccessTokenRequestParams(
-							$authCodeInput.value.trim()
-						)
-					})
-					if (!response.ok) throw new TypeError(`failed to fetch token`)
-					const json=await response.json()
-					const token=getTokenFromTokenResponseJson(json)
-					await this.passToken(connectionShowStage,abortSignal,token)
-				}
-			} catch (ex) {
-				console.log(ex)
-			}
-			abortManager.exitStage()
-			$authCodeInput.value=''
-		}
 	}
 
 	protected renderHeading(): HTMLHeadingElement {
@@ -100,19 +40,41 @@ export default class AuthManualGrantStage extends AuthStage {
 	}
 
 	protected renderPostRunControlWidgets(): HTMLElement[] {
+		this.$authCodeControls.append(
+			makeDiv('input-group')(
+				makeLabel()(
+					`Authorization code`, this.$authCodeInput
+				)
+			),
+			makeDiv('input-group')(
+				this.$authCodeButton
+			)
+		)
 		return [
 			this.$authCodeControls
 		]
 	}
-}
 
-function getTokenFromTokenResponseJson(json: unknown): string {
-	if (
-		isObject(json) && 'access_token' in json &&
-		typeof json.access_token == 'string'
-	) {
-		return json.access_token
-	} else {
-		throw new TypeError(`received invalid token`)
+	protected getAuthFlow(): Promise<AuthFlow> {
+		return this.authFlowFactory.makeAuthFlow(
+			this.$authClientIdInput.value.trim(),
+			'urn:ietf:wg:oauth:2.0:oob'
+		)
+	}
+
+	protected async getAuthCode(abortSignal: AbortSignal): Promise<string> {
+		this.$authCodeControls.hidden=false
+		await new Promise((resolve,reject)=>{
+			this.$authCodeButton.onclick=resolve
+			abortSignal.onabort=reject
+		})
+		return this.$authCodeInput.value.trim()
+	}
+
+	protected cleanupAfterGetCode(abortSignal: AbortSignal): void {
+		this.$authCodeControls.hidden=true
+		this.$authCodeButton.onclick=null
+		this.$authCodeInput.value=''
+		abortSignal.onabort=null
 	}
 }
