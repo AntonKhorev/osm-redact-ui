@@ -19,11 +19,6 @@ export default class AuthAutoStage extends AuthStage {
 		this.$authClientIdInput.name='auth-client-id'
 		this.$authClientIdInput.required=true
 
-		const $authCodeInput=makeElement('input')()()
-		$authCodeInput.name='auth-code'
-		const $authCodeButton=makeElement('button')()(`Accept code`)
-		$authCodeButton.type='button'
-
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			this.runControl.logger.clear()
@@ -64,7 +59,6 @@ export default class AuthAutoStage extends AuthStage {
 				console.log(ex)
 			}
 			abortManager.exitStage()
-			$authCodeInput.value=''
 		}
 	}
 
