@@ -24,7 +24,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 			this.runLogger.clear()
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
-				const osmWebRoot=this.$osmWebRootInput.value.trim()
+				const osmWebRoot=this.osmWebRoot
 				const clientId=this.$clientIdInput.value.trim()
 				const authFlow=await this.getAuthFlow(clientId)
 				let code: string

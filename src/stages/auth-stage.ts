@@ -16,34 +16,69 @@ export default abstract class AuthStage {
 	)
 	protected runLogger=new RunLogger(`Authorization log`)
 
-	protected $osmWebRootInput=makeElement('input')()()
-	protected $osmApiRootInput=makeElement('input')()()
+	private osmRoots: {
+		$osmWebRootInput: HTMLInputElement
+		$osmApiRootInput: HTMLInputElement
+	} | {
+		osmWebRoot: string
+		osmApiRoot: string
+	}
+
 	protected $form=makeElement('form')()()
 
 	$section=makeElement('section')()()
 
-	constructor() {
-		this.$osmApiRootInput.name='osm-api-root'
-		this.$osmApiRootInput.required=true
-		this.$osmApiRootInput.value=`http://127.0.0.1:3000/`
+	constructor(osmRoots?: {osmWebRoot: string, osmApiRoot: string}) {
+		if (osmRoots) {
+			this.osmRoots=osmRoots
+		} else {
+			const $osmWebRootInput=makeElement('input')()()
+			$osmWebRootInput.name='osm-web-root'
+			$osmWebRootInput.required=true
+			const $osmApiRootInput=makeElement('input')()()
+			$osmApiRootInput.name='osm-api-root'
+			this.osmRoots={
+				$osmWebRootInput, $osmApiRootInput
+			}
+		}
+	}
 
-		this.$osmWebRootInput.name='osm-web-root'
-		this.$osmWebRootInput.required=true
-		this.$osmWebRootInput.value=`http://127.0.0.1:3000/`
+	protected get osmWebRoot(): string {
+		if ('osmWebRoot' in this.osmRoots) {
+			return this.osmRoots.osmWebRoot
+		} else {
+			return this.osmRoots.$osmWebRootInput.value.trim()
+		}
+	}
+
+	protected get osmApiRoot(): string {
+		if ('osmApiRoot' in this.osmRoots) {
+			return this.osmRoots.osmApiRoot
+		} else {
+			const ownValue=this.osmRoots.$osmApiRootInput.value.trim()
+			return ownValue || this.osmWebRoot
+		}
 	}
 
 	render() {
+		if (
+			'$osmWebRootInput' in this.osmRoots &&
+			'$osmApiRootInput' in this.osmRoots
+		) {
+			this.$form.append(
+				makeDiv('input-group')(
+					makeLabel()(
+						`OSM web URL`, this.osmRoots.$osmWebRootInput
+					)
+				),
+				makeDiv('input-group')(
+					makeLabel()(
+						`OSM API URL (if different from web URL)`, this.osmRoots.$osmApiRootInput
+					)
+				)
+			)
+		}
 		this.$form.append(
-			makeDiv('input-group')(
-				makeLabel()(
-					`OSM web url`, this.$osmWebRootInput
-				)
-			),
-			makeDiv('input-group')(
-				makeLabel()(
-					`OSM API url`, this.$osmApiRootInput
-				)
-			),
 			...this.renderPreRunControlWidgets(),
 			this.runControl.$widget,
 		)
@@ -68,8 +103,8 @@ export default abstract class AuthStage {
 
 	protected async passToken(connectionShowStage: ConnectionShowStage, abortSignal: AbortSignal, token: string): Promise<void> {
 		const osmConnection: OsmConnection = {
-			webRoot: this.$osmWebRootInput.value.trim(),
-			apiRoot: this.$osmApiRootInput.value.trim(),
+			webRoot: this.osmWebRoot,
+			apiRoot: this.osmApiRoot,
 		}
 		if (token) {
 			const osmApi=new OsmApi(osmConnection.apiRoot,token,this.runLogger,abortSignal)
