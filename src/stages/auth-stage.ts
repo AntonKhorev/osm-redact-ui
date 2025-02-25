@@ -2,9 +2,10 @@ import ConnectionShowStage from './connection-show-stage'
 import RunControl from '../run-control'
 import RunLogger from '../run-logger'
 import AuthFlowFactory from '../auth-flow-factory'
+import OsmUrlProvider from '../osm-url-provider'
 import { OsmConnection } from '../osm-connection'
 import OsmApi from '../osm-api'
-import { makeElement, makeDiv, makeLabel } from '../html'
+import { makeElement } from '../html'
 import { isObject, isArrayOfStrings } from '../types'
 
 export default abstract class AuthStage {
@@ -16,69 +17,25 @@ export default abstract class AuthStage {
 	)
 	protected runLogger=new RunLogger(`Authorization log`)
 
-	private osmRoots: {
-		$osmWebRootInput: HTMLInputElement
-		$osmApiRootInput: HTMLInputElement
-	} | {
-		osmWebRoot: string
-		osmApiRoot: string
-	}
-
 	protected $form=makeElement('form')()()
 
 	$section=makeElement('section')()()
 
-	constructor(osmRoots?: {osmWebRoot: string, osmApiRoot: string}) {
-		if (osmRoots) {
-			this.osmRoots=osmRoots
-		} else {
-			const $osmWebRootInput=makeElement('input')()()
-			$osmWebRootInput.name='osm-web-root'
-			$osmWebRootInput.required=true
-			const $osmApiRootInput=makeElement('input')()()
-			$osmApiRootInput.name='osm-api-root'
-			this.osmRoots={
-				$osmWebRootInput, $osmApiRootInput
-			}
-		}
-	}
+	constructor(
+		private readonly osmUrlProvider: OsmUrlProvider
+	) {}
 
 	protected get osmWebRoot(): string {
-		if ('osmWebRoot' in this.osmRoots) {
-			return this.osmRoots.osmWebRoot
-		} else {
-			return this.osmRoots.$osmWebRootInput.value.trim()
-		}
+		return this.osmUrlProvider.webRoot
 	}
 
 	protected get osmApiRoot(): string {
-		if ('osmApiRoot' in this.osmRoots) {
-			return this.osmRoots.osmApiRoot
-		} else {
-			const ownValue=this.osmRoots.$osmApiRootInput.value.trim()
-			return ownValue || this.osmWebRoot
-		}
+		return this.osmUrlProvider.apiRoot
 	}
 
 	render() {
-		if (
-			'$osmWebRootInput' in this.osmRoots &&
-			'$osmApiRootInput' in this.osmRoots
-		) {
-			this.$form.append(
-				makeDiv('input-group')(
-					makeLabel()(
-						`OSM web URL`, this.osmRoots.$osmWebRootInput
-					)
-				),
-				makeDiv('input-group')(
-					makeLabel()(
-						`OSM API URL (if different from web URL)`, this.osmRoots.$osmApiRootInput
-					)
-				)
-			)
-		}
 		this.$form.append(
+			...this.osmUrlProvider.getWidgets(),
 			...this.renderPreRunControlWidgets(),
 			this.runControl.$widget,
 		)

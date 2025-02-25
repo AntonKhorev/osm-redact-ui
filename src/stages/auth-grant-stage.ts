@@ -1,5 +1,6 @@
 import AuthStage from './auth-stage'
 import ConnectionShowStage from './connection-show-stage'
+import OsmUrlProvider from '../osm-url-provider'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
 import AuthFlow from '../auth-flow'
@@ -10,9 +11,10 @@ export default abstract class AuthGrantStage extends AuthStage {
 	private $clientIdInput=makeElement('input')()()
 
 	constructor(
+		osmUrlProvider: OsmUrlProvider,
 		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
 	) {
-		super()
+		super(osmUrlProvider)
 
 		abortManager.addRunControl(this.runControl)
 

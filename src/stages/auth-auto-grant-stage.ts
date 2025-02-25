@@ -1,5 +1,6 @@
 import AuthGrantStage from './auth-grant-stage'
 import ConnectionShowStage from './connection-show-stage'
+import OsmUrlProvider from '../osm-url-provider'
 import AuthLanding from '../auth-landing'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
@@ -8,10 +9,11 @@ import { makeElement } from '../html'
 
 export default class AuthAutoGrantStage extends AuthGrantStage {
 	constructor(
+		osmUrlProvider: OsmUrlProvider,
 		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener,
 		private authLanding: AuthLanding
 	) {
-		super(abortManager,connectionShowStage,popupWindowOpener)
+		super(osmUrlProvider,abortManager,connectionShowStage,popupWindowOpener)
 	}
 
 	protected renderHeading(): HTMLHeadingElement {

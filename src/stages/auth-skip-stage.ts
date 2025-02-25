@@ -1,11 +1,12 @@
 import AuthStage from './auth-stage'
 import ConnectionShowStage from './connection-show-stage'
+import OsmUrlProvider from '../osm-url-provider'
 import AbortManager from '../abort-manager'
 import { makeElement } from '../html'
 
 export default class AuthSkipStage extends AuthStage {
-	constructor(abortManager: AbortManager, connectionShowStage: ConnectionShowStage) {
-		super()
+	constructor(osmUrlProvider: OsmUrlProvider, abortManager: AbortManager, connectionShowStage: ConnectionShowStage) {
+		super(osmUrlProvider)
 
 		abortManager.addRunControl(this.runControl)
 
