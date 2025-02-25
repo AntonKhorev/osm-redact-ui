@@ -23,11 +23,18 @@ function main(): void {
 	const elementsStage=new ElementsStage(abortManager)
 	const changesetStage=new ChangesetStage(abortManager,elementsStage)
 	const connectionShowStage=new ConnectionShowStage(changesetStage)
+
 	const authSkipStage=new AuthSkipStage(abortManager,connectionShowStage)
 	const authTokenStage=new AuthTokenStage(abortManager,connectionShowStage)
 	const authManualGrantStage=new AuthManualGrantStage(abortManager,connectionShowStage,popupWindowOpener)
 	const authAutoGrantStage=new AuthAutoGrantStage(abortManager,connectionShowStage,popupWindowOpener,authLanding)
-	const authTypeSelectStage=new AuthTypeSelectStage(authSkipStage,authTokenStage,authManualGrantStage,authAutoGrantStage)
+
+	const authTypeSelectStage=new AuthTypeSelectStage([
+		[`skipped`,'skip',authSkipStage],
+		[`by entering an existing token`,'token',authTokenStage],
+		[`by manually copying a code`,'code',authManualGrantStage],
+		[`automatic`,'auto',authAutoGrantStage]
+	])
 
 	authTypeSelectStage.render()
 	authSkipStage.render()
