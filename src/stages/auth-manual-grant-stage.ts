@@ -7,7 +7,7 @@ import { makeElement, makeDiv, makeLabel } from '../html'
 
 export default class AuthManualGrantStage extends AuthGrantStage {
 	private $authClientIdInput=makeElement('input')()()
-	private $authCodeControls=makeElement('fieldset')()()
+	private $authCodeForm=makeElement('form')()()
 	private $authCodeInput=makeElement('input')()()
 	private $authCodeButton=makeElement('button')()(`Accept code`)
 
@@ -20,9 +20,8 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 		this.$authClientIdInput.required=true
 
 		this.$authCodeInput.name='auth-code'
-		this.$authCodeButton.type='button'
 
-		this.$authCodeControls.hidden=true
+		this.$authCodeForm.hidden=true
 	}
 
 	protected renderHeading(): HTMLHeadingElement {
@@ -40,7 +39,7 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 	}
 
 	protected renderPostRunControlWidgets(): HTMLElement[] {
-		this.$authCodeControls.append(
+		this.$authCodeForm.append(
 			makeDiv('input-group')(
 				makeLabel()(
 					`Authorization code`, this.$authCodeInput
@@ -51,7 +50,7 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 			)
 		)
 		return [
-			this.$authCodeControls
+			this.$authCodeForm
 		]
 	}
 
@@ -63,17 +62,19 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 	}
 
 	protected async getAuthCode(abortSignal: AbortSignal): Promise<string> {
-		this.$authCodeControls.hidden=false
-		await new Promise((resolve,reject)=>{
-			this.$authCodeButton.onclick=resolve
+		this.$authCodeForm.hidden=false
+		return new Promise((resolve,reject)=>{
+			this.$authCodeForm.onsubmit=(ev)=>{
+				ev.preventDefault()
+				resolve(this.$authCodeInput.value.trim())
+			}
 			abortSignal.onabort=reject
 		})
-		return this.$authCodeInput.value.trim()
 	}
 
 	protected cleanupAfterGetCode(abortSignal: AbortSignal): void {
-		this.$authCodeControls.hidden=true
-		this.$authCodeButton.onclick=null
+		this.$authCodeForm.hidden=true
+		this.$authCodeForm.onsubmit=null
 		this.$authCodeInput.value=''
 		abortSignal.onabort=null
 	}

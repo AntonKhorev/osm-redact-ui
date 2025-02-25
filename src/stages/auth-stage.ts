@@ -45,12 +45,12 @@ export default abstract class AuthStage {
 			),
 			...this.renderPreRunControlWidgets(),
 			this.runControl.$widget,
-			...this.renderPostRunControlWidgets() // TODO: remove from form
 		)
 
 		this.$section.append(
 			this.renderHeading(),
-			this.$form
+			this.$form,
+			...this.renderPostRunControlWidgets()
 		)
 	}
 

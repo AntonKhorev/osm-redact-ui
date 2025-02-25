@@ -1,13 +1,7 @@
-form {
+form:not([hidden]) {
 	display: flex;
 	flex-direction: column;
 	gap: .5rem;
-
-	fieldset:not([hidden]) {
-		display: flex;
-		flex-direction: column;
-		gap: .5rem;
-	}
 
 	.input-group {
 		input, textarea, button {
