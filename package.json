@@ -1,7 +1,7 @@
 {
-  "name": "msvgen",
+  "name": "osm-redact-ui",
   "version": "0.0.0",
-  "description": "Generate marker svgs",
+  "description": "Web UI for redacting OpenStreetMap changesets",
   "type": "module",
   "scripts": {
     "build": "node build.js"
