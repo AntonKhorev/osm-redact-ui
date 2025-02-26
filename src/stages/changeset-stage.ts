@@ -9,16 +9,19 @@ import { makeElement, makeDiv, makeLabel } from '../html'
 import { isObject, isArray, toPositiveInteger } from '../types'
 
 export default class ChangesetStage {
-	private runControl=new RunControl(
+	private readonly runControl=new RunControl(
 		`Fetch target elements`,
 		`Abort fetching target elements`
 	)
-	private runLogger=new RunLogger(`Fetch log`)
+	private readonly runLogger=new RunLogger(`Fetch log`)
 
-	private $redactedChangesetInput=makeElement('input')()()
-	protected $form=makeElement('form')()()
+	private readonly $redactedChangesetInput=makeElement('input')()()
+	protected readonly $form=makeElement('form')()()
 
-	$section=makeElement('section')()(
+	private readonly $expectedChangesCountOutput=makeElement('output')()()
+	private readonly $downloadedChangesCountOutput=makeElement('output')()()
+
+	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target changeset`)
 	)
 
@@ -50,7 +53,7 @@ export default class ChangesetStage {
 					const json=await response.json()
 					expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
 				}
-				elementsStage.$expectedChangesCountOutput.value=String(expectedChangesCount)
+				this.$expectedChangesCountOutput.value=String(expectedChangesCount)
 	
 				let downloadedChangesCount=0
 				const startingVersions=new OsmElementLowerVersionCollection
@@ -69,7 +72,7 @@ export default class ChangesetStage {
 						const version=toPositiveInteger($element.getAttribute('version'))
 						startingVersions.add(type,id,version)
 					}
-					elementsStage.$downloadedChangesCountOutput.value=String(downloadedChangesCount)
+					this.$downloadedChangesCountOutput.value=String(downloadedChangesCount)
 				}
 				if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`got missing elements in changeset changes`)
 	
@@ -108,8 +111,20 @@ export default class ChangesetStage {
 
 		this.$section.append(
 			this.$form,
-			this.runLogger.$widget
+			this.runLogger.$widget,
+			makeDiv('output-group')(
+				`Expected changes count: `,this.$expectedChangesCountOutput
+			),
+			makeDiv('output-group')(
+				`Downloaded changes count: `,this.$downloadedChangesCountOutput
+			),
 		)
+	}
+
+	clear() {
+		this.runLogger.clear()
+		this.$expectedChangesCountOutput.value=''
+		this.$downloadedChangesCountOutput.value=''
 	}
 }
 

@@ -7,20 +7,18 @@ import { makeElement, makeDiv, makeLabel } from '../html'
 import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
-	private runControl=new RunControl(
+	private readonly runControl=new RunControl(
 		`Redact target elements`,
 		`Abort redacting target elements`
 	)
-	private runLogger=new RunLogger(`Redact log`)
+	private readonly runLogger=new RunLogger(`Redact log`)
 
-	$expectedChangesCountOutput=makeElement('output')()()
-	$downloadedChangesCountOutput=makeElement('output')()()
-	$targetTextarea=makeElement('textarea')()()
+	readonly $targetTextarea=makeElement('textarea')()()
 
-	private $redactionInput=makeElement('input')()()
-	protected $form=makeElement('form')()()
+	private readonly $redactionInput=makeElement('input')()()
+	protected readonly $form=makeElement('form')()()
 
-	$section=makeElement('section')()(
+	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target elements`)
 	)
 
@@ -80,12 +78,6 @@ export default class ElementsStage {
 
 	render() {
 		this.$form.append(
-			makeDiv('output-group')(
-				`Expected changes count: `,this.$expectedChangesCountOutput
-			),
-			makeDiv('output-group')(
-				`Downloaded changes count: `,this.$downloadedChangesCountOutput
-			),
 			makeDiv('input-group')(
 				makeLabel()(
 					`Elements to redact `,this.$targetTextarea
@@ -106,10 +98,7 @@ export default class ElementsStage {
 	}
 
 	clear() {
-		this.runControl.$widget.hidden=true
 		this.runLogger.clear()
-		this.$expectedChangesCountOutput.value=''
-		this.$downloadedChangesCountOutput.value=''
 		this.$targetTextarea.value=''
 	}
 }
