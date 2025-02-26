@@ -1,4 +1,4 @@
-import RunLogger from "./run-logger"
+import RunLogger from './run-logger'
 
 export default class OsmApi {
 	constructor(

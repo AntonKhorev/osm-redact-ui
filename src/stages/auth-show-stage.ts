@@ -1,15 +1,17 @@
-import ChangesetStage from './changeset-stage'
+import CurrentOsmAuthManager from '../current-osm-auth-manager'
+import OsmAuth from '../osm-auth'
 import { makeElement, makeLink } from '../html'
+import { bubbleEvent } from '../events'
 
 export default class AuthShowStage {
 	private $noCurrentAuthorizationMessage=makeElement('p')()(`No current authorization`)
 	private $authTable=makeElement('table')()()
 
 	$section=makeElement('section')()(
-		makeElement('h2')()(`See current server and authorization`)
+		makeElement('h2')()(`Current server and authorization`)
 	)
 
-	constructor(changesetStage: ChangesetStage) {
+	constructor(currentOsmAuthManager: CurrentOsmAuthManager) {
 		this.$authTable.hidden=true
 
 		document.body.addEventListener('osmRedactUi:newAuth',ev=>{
@@ -38,8 +40,9 @@ export default class AuthShowStage {
 					)
 				)
 			)
-	
-			changesetStage.setReadyState(osmAuthData)
+
+			currentOsmAuthManager.currentOsmAuth=new OsmAuth(osmAuthData)
+			bubbleEvent(this.$section,'osmRedactUi:currentAuthUpdate')
 		})
 	}
 

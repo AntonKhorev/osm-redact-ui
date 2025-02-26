@@ -6,7 +6,7 @@ export default class AuthTypeSelectStage {
 	protected $form=makeElement('form')()()
 
 	$section=makeElement('section')()(
-		makeElement('h2')()(`Select authorization type`)
+		makeElement('h2')()(`Authorization type`)
 	)
 
 	constructor(

@@ -1,15 +1,12 @@
 import RunControl from '../run-control'
 import RunLogger from '../run-logger'
 import AbortManager from '../abort-manager'
-import OsmApi from '../osm-api'
-import { OsmAuthData } from '../osm-auth-data'
+import CurrentOsmAuthProvider from '../current-osm-auth-provider'
 import { isOsmElementType } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from '../html'
 import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
-	private osmConnection?: OsmAuthData
-
 	private runControl=new RunControl(
 		`Redact target elements`,
 		`Abort redacting target elements`
@@ -24,12 +21,13 @@ export default class ElementsStage {
 	protected $form=makeElement('form')()()
 
 	$section=makeElement('section')()(
-		makeElement('h2')()(`See target elements`)
+		makeElement('h2')()(`Target elements`)
 	)
 
-	constructor(abortManager: AbortManager) {
+	constructor(abortManager: AbortManager, currentOsmAuthProvider: CurrentOsmAuthProvider) {
 		this.$targetTextarea.rows=10
 		this.$targetTextarea.name='osm-elements-to-redact'
+		this.$targetTextarea.required=true
 		
 		this.$redactionInput.name='redaction-id'
 		this.$redactionInput.required=true
@@ -37,12 +35,15 @@ export default class ElementsStage {
 		this.runControl.$widget.hidden=true
 		abortManager.addRunControl(this.runControl)
 
+		document.body.addEventListener('osmRedactUi:currentAuthUpdate',()=>{
+			this.runControl.$widget.hidden=!currentOsmAuthProvider.currentOsmAuth
+		})
+
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			if (!this.osmConnection) return
+			if (!currentOsmAuthProvider.currentOsmAuth) return
 			const abortSignal=abortManager.enterStage(this.runControl)
-			const authToken=this.osmConnection.user?this.osmConnection.user.token:''
-			const osmApi=new OsmApi(this.osmConnection.apiRoot,authToken,this.runLogger,abortSignal)
+			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runLogger,abortSignal)
 			try {
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
@@ -71,7 +72,8 @@ export default class ElementsStage {
 			} catch (ex) {
 				console.log(ex)
 			}
-			// TODO: post-check if top versions match
+			// TODO: post-check if top versions match - no, this is only needed after revert
+			// actual TODO: post-check if everything is redacted
 			abortManager.exitStage()
 		}
 	}
@@ -104,16 +106,10 @@ export default class ElementsStage {
 	}
 
 	clear() {
-		this.osmConnection=undefined
 		this.runControl.$widget.hidden=true
 		this.runLogger.clear()
 		this.$expectedChangesCountOutput.value=''
 		this.$downloadedChangesCountOutput.value=''
 		this.$targetTextarea.value=''
-	}
-
-	setReadyState(osmConnection: OsmAuthData) {
-		this.osmConnection=osmConnection
-		this.runControl.$widget.hidden=false
 	}
 }

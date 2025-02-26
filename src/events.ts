@@ -1,4 +1,7 @@
-export function bubbleEvent($target: HTMLElement, type: string) {
+export function bubbleEvent<T extends keyof HTMLElementEventMap>(
+	$target: HTMLElement,
+	type: T
+) {
 	return $target.dispatchEvent(new Event(type,{bubbles:true}))
 }
 

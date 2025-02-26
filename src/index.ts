@@ -9,6 +9,7 @@ import ChangesetStage from './stages/changeset-stage'
 import ElementsStage from './stages/elements-stage'
 
 import AuthLanding from './auth-landing'
+import CurrentOsmAuthManager from './current-osm-auth-manager'
 import InputOsmUrlProvider from './input-osm-url-provider'
 import FixedOsmUrlProvider from './fixed-osm-url-provider'
 import InputOsmClientIdProvider from './input-osm-client-id-provider'
@@ -23,12 +24,13 @@ function main(): void {
 	const authLanding=new AuthLanding
 	if (authLanding.land()) return
 
+	const currentOsmAuthManager=new CurrentOsmAuthManager
 	const popupWindowOpener=new PopupWindowOpener
 	const abortManager=new AbortManager
 
-	const elementsStage=new ElementsStage(abortManager)
-	const changesetStage=new ChangesetStage(abortManager,elementsStage)
-	const connectionShowStage=new AuthShowStage(changesetStage)
+	const elementsStage=new ElementsStage(abortManager,currentOsmAuthManager.provider)
+	const changesetStage=new ChangesetStage(abortManager,currentOsmAuthManager.provider,elementsStage)
+	const connectionShowStage=new AuthShowStage(currentOsmAuthManager)
 
 	const authStages: AuthStage[] = []
 	const isFileProtocol=location.protocol=='file:'
