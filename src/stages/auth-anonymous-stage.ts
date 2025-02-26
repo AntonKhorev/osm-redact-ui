@@ -4,7 +4,7 @@ import OsmUrlProvider from '../osm-url-provider'
 import AbortManager from '../abort-manager'
 import { makeElement } from '../html'
 
-export default class AuthSkipStage extends AuthStage {
+export default class AuthAnonymousStage extends AuthStage {
 	constructor(osmUrlProvider: OsmUrlProvider, abortManager: AbortManager, connectionShowStage: ConnectionShowStage) {
 		super(osmUrlProvider)
 
@@ -25,6 +25,6 @@ export default class AuthSkipStage extends AuthStage {
 	}
 
 	protected renderHeading(): HTMLHeadingElement {
-		return makeElement('h2')()(`Skip authorization`)
+		return makeElement('h2')()(`Anonymous authorization`)
 	}
 }

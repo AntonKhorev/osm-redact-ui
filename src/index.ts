@@ -1,6 +1,6 @@
 import AuthStage from './stages/auth-stage'
 import AuthTypeSelectStage from './stages/auth-type-select-stage'
-import AuthSkipStage from './stages/auth-skip-stage'
+import AuthAnonymousStage from './stages/auth-anonymous-stage'
 import AuthTokenStage from './stages/auth-token-stage'
 import AuthManualGrantStage from './stages/auth-manual-grant-stage'
 import AuthAutoGrantStage from './stages/auth-auto-grant-stage'
@@ -61,7 +61,7 @@ function main(): void {
 			abortManager,connectionShowStage
 		)
 	],[
-		`skipped`,'skip',new AuthSkipStage(
+		`anonymous`,'anonymous',new AuthAnonymousStage(
 			new InputOsmUrlProvider,
 			abortManager,connectionShowStage
 		)
