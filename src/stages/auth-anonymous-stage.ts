@@ -1,12 +1,15 @@
 import AuthStage from './auth-stage'
-import ConnectionShowStage from './connection-show-stage'
+import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import AbortManager from '../abort-manager'
-import { makeElement } from '../html'
 
 export default class AuthAnonymousStage extends AuthStage {
-	constructor(osmUrlProvider: OsmUrlProvider, abortManager: AbortManager, connectionShowStage: ConnectionShowStage) {
-		super(osmUrlProvider)
+	constructor(
+		title: string, type: string,
+		osmUrlProvider: OsmUrlProvider,
+		abortManager: AbortManager, connectionShowStage: AuthShowStage
+	) {
+		super(title,type,osmUrlProvider)
 
 		abortManager.addRunControl(this.runControl)
 
@@ -22,9 +25,5 @@ export default class AuthAnonymousStage extends AuthStage {
 			}
 			abortManager.exitStage()
 		}
-	}
-
-	protected renderHeading(): HTMLHeadingElement {
-		return makeElement('h2')()(`Anonymous authorization`)
 	}
 }

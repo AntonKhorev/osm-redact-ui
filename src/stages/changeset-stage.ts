@@ -3,14 +3,14 @@ import RunControl from '../run-control'
 import RunLogger from '../run-logger'
 import AbortManager from '../abort-manager'
 import OsmApi from '../osm-api'
-import { OsmConnection } from '../osm-connection'
+import { OsmAuthData } from '../osm-auth-data'
 import type { OsmElementType } from '../osm-element-collection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from '../html'
 import { isObject, isArray, toPositiveInteger } from '../types'
 
 export default class ChangesetStage {
-	private osmConnection?: OsmConnection
+	private osmConnection?: OsmAuthData
 
 	private runControl=new RunControl(
 		`Fetch target elements`,
@@ -113,7 +113,7 @@ export default class ChangesetStage {
 		)
 	}
 
-	setReadyState(osmConnection: OsmConnection) {
+	setReadyState(osmConnection: OsmAuthData) {
 		this.osmConnection=osmConnection
 		this.runControl.$widget.hidden=false
 	}

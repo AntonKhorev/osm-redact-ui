@@ -1,24 +1,20 @@
 import AuthGrantStage from './auth-grant-stage'
-import ConnectionShowStage from './connection-show-stage'
+import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import OsmClientIdProvider from '../osm-client-id-provider'
 import AuthLanding from '../auth-landing'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
 import AuthFlow from '../auth-flow'
-import { makeElement } from '../html'
 
 export default class AuthAutoGrantStage extends AuthGrantStage {
 	constructor(
+		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider, osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener,
+		abortManager: AbortManager, connectionShowStage: AuthShowStage, popupWindowOpener: PopupWindowOpener,
 		private authLanding: AuthLanding
 	) {
-		super(osmUrlProvider,osmClientIdProvider,abortManager,connectionShowStage,popupWindowOpener)
-	}
-
-	protected renderHeading(): HTMLHeadingElement {
-		return makeElement('h2')()(`Authorize`)
+		super(title,type,osmUrlProvider,osmClientIdProvider,abortManager,connectionShowStage,popupWindowOpener)
 	}
 
 	protected getAuthFlow(clientId: string): Promise<AuthFlow> {

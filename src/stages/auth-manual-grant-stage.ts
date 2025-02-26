@@ -1,5 +1,5 @@
 import AuthGrantStage from './auth-grant-stage'
-import ConnectionShowStage from './connection-show-stage'
+import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import OsmClientIdProvider from '../osm-client-id-provider'
 import PopupWindowOpener from '../popup-window-opener'
@@ -13,17 +13,14 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 	private $authCodeButton=makeElement('button')()(`Accept code`)
 
 	constructor(
+		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider, osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
+		abortManager: AbortManager, connectionShowStage: AuthShowStage, popupWindowOpener: PopupWindowOpener
 	) {
-		super(osmUrlProvider,osmClientIdProvider,abortManager,connectionShowStage,popupWindowOpener)
+		super(title,type,osmUrlProvider,osmClientIdProvider,abortManager,connectionShowStage,popupWindowOpener)
 
 		this.$authCodeInput.name='auth-code'
 		this.$authCodeForm.hidden=true
-	}
-
-	protected renderHeading(): HTMLHeadingElement {
-		return makeElement('h2')()(`Authorize by copying a code`)
 	}
 
 	protected renderPostRunControlWidgets(): HTMLElement[] {

@@ -2,13 +2,13 @@ import RunControl from '../run-control'
 import RunLogger from '../run-logger'
 import AbortManager from '../abort-manager'
 import OsmApi from '../osm-api'
-import { OsmConnection } from '../osm-connection'
+import { OsmAuthData } from '../osm-auth-data'
 import { isOsmElementType } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from '../html'
 import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
-	private osmConnection?: OsmConnection
+	private osmConnection?: OsmAuthData
 
 	private runControl=new RunControl(
 		`Redact target elements`,
@@ -112,7 +112,7 @@ export default class ElementsStage {
 		this.$targetTextarea.value=''
 	}
 
-	setReadyState(osmConnection: OsmConnection) {
+	setReadyState(osmConnection: OsmAuthData) {
 		this.osmConnection=osmConnection
 		this.runControl.$widget.hidden=false
 	}

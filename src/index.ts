@@ -4,7 +4,7 @@ import AuthAnonymousStage from './stages/auth-anonymous-stage'
 import AuthTokenStage from './stages/auth-token-stage'
 import AuthManualGrantStage from './stages/auth-manual-grant-stage'
 import AuthAutoGrantStage from './stages/auth-auto-grant-stage'
-import ConnectionShowStage from './stages/connection-show-stage'
+import AuthShowStage from './stages/auth-show-stage'
 import ChangesetStage from './stages/changeset-stage'
 import ElementsStage from './stages/elements-stage'
 
@@ -28,12 +28,13 @@ function main(): void {
 
 	const elementsStage=new ElementsStage(abortManager)
 	const changesetStage=new ChangesetStage(abortManager,elementsStage)
-	const connectionShowStage=new ConnectionShowStage(changesetStage)
+	const connectionShowStage=new AuthShowStage(changesetStage)
 
-	const authStageSpecs: [text: string, value: string, stage: AuthStage][] = []
+	const authStages: AuthStage[] = []
 	const isFileProtocol=location.protocol=='file:'
-	authStageSpecs.push([
-		`dev server`,'dev',new (isFileProtocol?AuthManualGrantStage:AuthAutoGrantStage)(
+	authStages.push(
+		new (isFileProtocol?AuthManualGrantStage:AuthAutoGrantStage)(
+			`Authorization on dev server`,'https://master.apis.dev.openstreetmap.org/',
 			new FixedOsmUrlProvider('https://master.apis.dev.openstreetmap.org/'),
 			(authLanding.url=='https://antonkhorev.github.io/osm-redact-ui/'
 				? new FixedOsmClientIdProvider('2pHyb08qEaiSM4x4qUmaAkoJg5v6QL-VMLfrFofNoJY')
@@ -41,47 +42,50 @@ function main(): void {
 			),
 			abortManager,connectionShowStage,popupWindowOpener,authLanding
 		)
-	])
-	if (!isFileProtocol) authStageSpecs.push([
-		`automatic`,'auto',new AuthAutoGrantStage(
+	)
+	if (!isFileProtocol) authStages.push(
+		new AuthAutoGrantStage(
+			`Automatic authorization`,'auto',
 			new InputOsmUrlProvider,
 			new InputOsmClientIdProvider,
 			abortManager,connectionShowStage,popupWindowOpener,authLanding
 		)
-	])
-	authStageSpecs.push([
-		`by manually copying a code`,'code',new AuthManualGrantStage(
+	)
+	authStages.push(
+		new AuthManualGrantStage(
+			`Authorization by manually copying a code`,'code',
 			new InputOsmUrlProvider,
 			new InputOsmClientIdProvider,
 			abortManager,connectionShowStage,popupWindowOpener
-		)
-	],[
-		`by entering an existing token`,'token',new AuthTokenStage(
+		),new AuthTokenStage(
+			`Authorization by entering an existing token`,'token',
+			new InputOsmUrlProvider,
+			abortManager,connectionShowStage
+		),
+		new AuthAnonymousStage(
+			`Anonymous authorization`,'anonymous',
 			new InputOsmUrlProvider,
 			abortManager,connectionShowStage
 		)
-	],[
-		`anonymous`,'anonymous',new AuthAnonymousStage(
-			new InputOsmUrlProvider,
-			abortManager,connectionShowStage
+	)
+	const authTypeSelectStage=new AuthTypeSelectStage(authStages)
+
+	document.body.append(
+		makeElement('main')()(
+			makeElement('h1')()(`Changeset redaction UI`),
+			authTypeSelectStage.$section,
+			...authStages.map(stage=>stage.$section),
+			connectionShowStage.$section,
+			changesetStage.$section,
+			elementsStage.$section
 		)
-	])
-	const authTypeSelectStage=new AuthTypeSelectStage(authStageSpecs)
+	)
 
 	authTypeSelectStage.render()
-	for (const [text,value,stage] of authStageSpecs) {
+	for (const stage of authStages) {
 		stage.render()
 	}
 	connectionShowStage.render()
 	changesetStage.render()
 	elementsStage.render()
-
-	document.body.append(
-		makeElement('h1')()(`Redact changeset`),
-		authTypeSelectStage.$section,
-		...authStageSpecs.map(([text,value,stage])=>stage.$section),
-		connectionShowStage.$section,
-		changesetStage.$section,
-		elementsStage.$section
-	)
 }

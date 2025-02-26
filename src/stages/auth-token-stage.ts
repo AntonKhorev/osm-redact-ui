@@ -1,5 +1,5 @@
 import AuthStage from './auth-stage'
-import ConnectionShowStage from './connection-show-stage'
+import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import AbortManager from '../abort-manager'
 import { makeElement, makeDiv, makeLabel } from '../html'
@@ -7,8 +7,11 @@ import { makeElement, makeDiv, makeLabel } from '../html'
 export default class AuthTokenStage extends AuthStage {
 	private $tokenInput=makeElement('input')()()
 
-	constructor(osmUrlProvider: OsmUrlProvider, abortManager: AbortManager, connectionShowStage: ConnectionShowStage) {
-		super(osmUrlProvider)
+	constructor(
+		title: string, type: string,
+		osmUrlProvider: OsmUrlProvider, abortManager: AbortManager, connectionShowStage: AuthShowStage
+	) {
+		super(title,type,osmUrlProvider)
 
 		abortManager.addRunControl(this.runControl)
 
@@ -27,10 +30,6 @@ export default class AuthTokenStage extends AuthStage {
 			}
 			abortManager.exitStage()
 		}
-	}
-
-	protected renderHeading(): HTMLHeadingElement {
-		return makeElement('h2')()(`Authorize by entering an existing token`)
 	}
 
 	protected renderPreRunControlWidgets(): HTMLElement[] {

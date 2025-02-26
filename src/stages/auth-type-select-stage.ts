@@ -10,15 +10,15 @@ export default class AuthTypeSelectStage {
 	)
 
 	constructor(
-		authStageSpecs: [text: string, value: string, stage: AuthStage][]
+		authStages: AuthStage[]
 	) {
 		this.$authTypeSelect.append(
-			...authStageSpecs.map(([text,value])=>new Option(text,value))
+			...authStages.map(stage=>new Option(stage.title,stage.type))
 		)
 
 		const updateAuthStagesVisibility=()=>{
-			for (const [text,value,stage] of authStageSpecs) {
-				stage.$section.hidden=this.$authTypeSelect.value!=value
+			for (const stage of authStages) {
+				stage.$section.hidden=this.$authTypeSelect.value!=stage.type
 			}
 		}
 		updateAuthStagesVisibility()

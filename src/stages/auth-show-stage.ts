@@ -1,9 +1,9 @@
 import ChangesetStage from './changeset-stage'
-import { OsmConnection } from '../osm-connection'
+import { OsmAuthData } from '../osm-auth-data'
 import { makeElement, makeLink } from '../html'
 
-export default class ConnectionShowStage {
-	private $notConnectedMessage=makeElement('p')()(`Not connected`)
+export default class AuthShowStage {
+	private $notConnectedMessage=makeElement('p')()(`No current authorization`)
 	private $authTable=makeElement('table')()()
 
 	$section=makeElement('section')()(
@@ -23,7 +23,7 @@ export default class ConnectionShowStage {
 		)
 	}
 
-	setReadyState(osmConnection: OsmConnection) {
+	setReadyState(osmConnection: OsmAuthData) {
 		this.$notConnectedMessage.hidden=true
 		this.$authTable.hidden=false
 

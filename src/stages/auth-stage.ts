@@ -1,27 +1,28 @@
-import ConnectionShowStage from './connection-show-stage'
+import AuthShowStage from './auth-show-stage'
 import RunControl from '../run-control'
 import RunLogger from '../run-logger'
 import AuthFlowFactory from '../auth-flow-factory'
 import OsmUrlProvider from '../osm-url-provider'
-import { OsmConnection } from '../osm-connection'
+import { OsmAuthData, convertOsmUserDetailsJsonToOsmAuthUserData } from '../osm-auth-data'
 import OsmApi from '../osm-api'
 import { makeElement } from '../html'
-import { isObject, isArrayOfStrings } from '../types'
 
 export default abstract class AuthStage {
-	protected authFlowFactory=new AuthFlowFactory
+	protected readonly authFlowFactory=new AuthFlowFactory
 	
-	protected runControl=new RunControl(
+	protected readonly runControl=new RunControl(
 		`Authorize`,
 		`Abort authorization`
 	)
-	protected runLogger=new RunLogger(`Authorization log`)
+	protected readonly runLogger=new RunLogger(`Authorization log`)
 
-	protected $form=makeElement('form')()()
+	protected readonly $form=makeElement('form')()()
 
-	$section=makeElement('section')()()
+	readonly $section=makeElement('section')()()
 
 	constructor(
+		readonly title: string,
+		readonly type: string,
 		private readonly osmUrlProvider: OsmUrlProvider
 	) {}
 
@@ -41,14 +42,12 @@ export default abstract class AuthStage {
 		)
 
 		this.$section.append(
-			this.renderHeading(),
+			makeElement('h2')()(this.title),
 			this.$form,
 			this.runLogger.$widget,
 			...this.renderPostRunControlWidgets()
 		)
 	}
-
-	protected abstract renderHeading(): HTMLHeadingElement
 
 	protected renderPreRunControlWidgets(): HTMLElement[] {
 		return []
@@ -58,8 +57,8 @@ export default abstract class AuthStage {
 		return []
 	}
 
-	protected async passToken(connectionShowStage: ConnectionShowStage, abortSignal: AbortSignal, token: string): Promise<void> {
-		const osmConnection: OsmConnection = {
+	protected async passToken(connectionShowStage: AuthShowStage, abortSignal: AbortSignal, token: string): Promise<void> {
+		const osmConnection: OsmAuthData = {
 			webRoot: this.osmWebRoot,
 			apiRoot: this.osmApiRoot,
 		}
@@ -68,38 +67,8 @@ export default abstract class AuthStage {
 			const response=await osmApi.get(`user/details.json`)
 			if (!response.ok) throw new TypeError(`failed to fetch user details`)
 			const json=await response.json()
-			osmConnection.user={
-				token,
-				name: getNameFromOsmUserDetailsJson(json),
-				isModerator: getIsModeratorFromOsmUserDetailsJson(json)
-			}
+			osmConnection.user=convertOsmUserDetailsJsonToOsmAuthUserData(json,token)
 		}
 		connectionShowStage.setReadyState(osmConnection)
 	}
-}
-
-function getNameFromOsmUserDetailsJson(json: unknown): string {
-	if (
-		isObject(json) && 'user' in json &&
-		isObject(json.user) && `display_name` in json.user &&
-		typeof json.user.display_name == 'string'
-	) {
-		return json.user.display_name
-	}
-	throw new TypeError(`received invalid user details`)
-}
-
-function getIsModeratorFromOsmUserDetailsJson(json: unknown): boolean {
-	if (
-		isObject(json) && 'user' in json && isObject(json.user)
-	) {
-		if (
-			'roles' in json.user && isArrayOfStrings(json.user.roles)
-		) {
-			return json.user.roles.includes('moderator')
-		} else {
-			return false
-		}
-	}
-	throw new TypeError(`received invalid user details`)
 }

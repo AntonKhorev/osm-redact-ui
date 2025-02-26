@@ -1,5 +1,5 @@
 import AuthStage from './auth-stage'
-import ConnectionShowStage from './connection-show-stage'
+import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import OsmClientIdProvider from '../osm-client-id-provider'
 import PopupWindowOpener from '../popup-window-opener'
@@ -9,11 +9,12 @@ import { isObject } from '../types'
 
 export default abstract class AuthGrantStage extends AuthStage {
 	constructor(
+		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider,
 		private readonly osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
+		abortManager: AbortManager, connectionShowStage: AuthShowStage, popupWindowOpener: PopupWindowOpener
 	) {
-		super(osmUrlProvider)
+		super(title,type,osmUrlProvider)
 
 		abortManager.addRunControl(this.runControl)
 
