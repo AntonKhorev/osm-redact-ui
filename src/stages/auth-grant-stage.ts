@@ -1,5 +1,4 @@
 import AuthStage from './auth-stage'
-import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import OsmClientIdProvider from '../osm-client-id-provider'
 import PopupWindowOpener from '../popup-window-opener'
@@ -12,7 +11,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider,
 		private readonly osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, connectionShowStage: AuthShowStage, popupWindowOpener: PopupWindowOpener
+		abortManager: AbortManager, popupWindowOpener: PopupWindowOpener
 	) {
 		super(title,type,osmUrlProvider)
 
@@ -50,7 +49,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 					if (!response.ok) throw new TypeError(`failed to fetch token`)
 					const json=await response.json()
 					const token=getTokenFromTokenResponseJson(json)
-					await this.passToken(connectionShowStage,abortSignal,token)
+					await this.passToken(abortSignal,token)
 				}
 			} catch (ex) {
 				console.log(ex)

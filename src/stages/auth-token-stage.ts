@@ -1,5 +1,4 @@
 import AuthStage from './auth-stage'
-import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import AbortManager from '../abort-manager'
 import { makeElement, makeDiv, makeLabel } from '../html'
@@ -9,7 +8,7 @@ export default class AuthTokenStage extends AuthStage {
 
 	constructor(
 		title: string, type: string,
-		osmUrlProvider: OsmUrlProvider, abortManager: AbortManager, connectionShowStage: AuthShowStage
+		osmUrlProvider: OsmUrlProvider, abortManager: AbortManager
 	) {
 		super(title,type,osmUrlProvider)
 
@@ -24,7 +23,7 @@ export default class AuthTokenStage extends AuthStage {
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
 				const token=this.$tokenInput.value.trim()
-				await this.passToken(connectionShowStage,abortSignal,token)
+				await this.passToken(abortSignal,token)
 			} catch (ex) {
 				console.log(ex)
 			}

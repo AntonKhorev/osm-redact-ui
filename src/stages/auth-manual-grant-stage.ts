@@ -1,5 +1,4 @@
 import AuthGrantStage from './auth-grant-stage'
-import AuthShowStage from './auth-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
 import OsmClientIdProvider from '../osm-client-id-provider'
 import PopupWindowOpener from '../popup-window-opener'
@@ -15,9 +14,9 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 	constructor(
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider, osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, connectionShowStage: AuthShowStage, popupWindowOpener: PopupWindowOpener
+		abortManager: AbortManager, popupWindowOpener: PopupWindowOpener
 	) {
-		super(title,type,osmUrlProvider,osmClientIdProvider,abortManager,connectionShowStage,popupWindowOpener)
+		super(title,type,osmUrlProvider,osmClientIdProvider,abortManager,popupWindowOpener)
 
 		this.$authCodeInput.name='auth-code'
 		this.$authCodeForm.hidden=true

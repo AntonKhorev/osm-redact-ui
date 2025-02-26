@@ -40,7 +40,7 @@ function main(): void {
 				? new FixedOsmClientIdProvider('2pHyb08qEaiSM4x4qUmaAkoJg5v6QL-VMLfrFofNoJY')
 				: new InputOsmClientIdProvider
 			),
-			abortManager,connectionShowStage,popupWindowOpener,authLanding
+			abortManager,popupWindowOpener,authLanding
 		)
 	)
 	if (!isFileProtocol) authStages.push(
@@ -48,7 +48,7 @@ function main(): void {
 			`Automatic authorization`,'auto',
 			new InputOsmUrlProvider,
 			new InputOsmClientIdProvider,
-			abortManager,connectionShowStage,popupWindowOpener,authLanding
+			abortManager,popupWindowOpener,authLanding
 		)
 	)
 	authStages.push(
@@ -56,16 +56,16 @@ function main(): void {
 			`Authorization by manually copying a code`,'code',
 			new InputOsmUrlProvider,
 			new InputOsmClientIdProvider,
-			abortManager,connectionShowStage,popupWindowOpener
+			abortManager,popupWindowOpener
 		),new AuthTokenStage(
 			`Authorization by entering an existing token`,'token',
 			new InputOsmUrlProvider,
-			abortManager,connectionShowStage
+			abortManager
 		),
 		new AuthAnonymousStage(
 			`Anonymous authorization`,'anonymous',
 			new InputOsmUrlProvider,
-			abortManager,connectionShowStage
+			abortManager
 		)
 	)
 	const authTypeSelectStage=new AuthTypeSelectStage(authStages)
