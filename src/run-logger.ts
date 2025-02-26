@@ -16,11 +16,15 @@ export default class RunLogger {
 		this.$list.replaceChildren()
 	}
 
-	appendGetRequest(url: string): void {
+	appendRequest(method: string, url: string): void {
 		this.$list.append(
 			makeElement('li')()(
 				makeElement('code')()(
-					`GET `,makeLink(url,url)
+					method,` `,
+					(method=='GET'
+						? makeLink(url,url)
+						: url
+					)
 				)
 			)
 		)
