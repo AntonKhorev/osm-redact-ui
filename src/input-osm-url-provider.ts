@@ -8,12 +8,10 @@ export default class InputOsmUrlProvider extends OsmUrlProvider {
 	constructor() {
 		super()
 
-		const $osmWebRootInput=makeElement('input')()()
-		$osmWebRootInput.name='osm-web-root'
-		$osmWebRootInput.required=true
+		this.$webRootInput.name='osm-web-root'
+		this.$webRootInput.required=true
 
-		const $osmApiRootInput=makeElement('input')()()
-		$osmApiRootInput.name='osm-api-root'
+		this.$apiRootInput.name='osm-api-root'
 	}
 
 	getWidgets(): HTMLElement[] {
