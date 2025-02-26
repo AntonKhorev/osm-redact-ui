@@ -17,22 +17,21 @@ export default class RunLogger {
 	}
 
 	appendRequest(method: string, url: string): void {
-		this.$list.append(
-			makeElement('li')()(
-				makeElement('code')()(
-					method,` `,
-					(method=='GET'
-						? makeLink(url,url)
-						: url
-					)
+		const $li=makeElement('li')()(
+			makeElement('code')()(
+				method,` `,
+				(method=='GET'
+					? makeLink(url,url)
+					: url
 				)
 			)
 		)
+		this.$list.append($li)
 	}
 
-	appendText(text: string): void {
-		this.$list.append(
-			makeElement('li')()(text)
-		)
+	appendOperation(text: string, url?: string): void {
+		const $li=makeElement('li')()(text)
+		if (url) $li.append(` `,makeLink(url,url))
+		this.$list.append($li)
 	}
 }

@@ -29,7 +29,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 				{
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					this.runLogger.appendText(`open browser window ${urlStart}`)
+					this.runLogger.appendOperation(`open browser window`,urlStart)
 					const authWindow=popupWindowOpener.open(url)
 					try {
 						code=await this.getAuthCode(abortSignal)
@@ -40,7 +40,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 				}
 				{
 					const url=`${osmWebRoot}oauth2/token`
-					this.runLogger.appendText(`POST ${url}`)
+					this.runLogger.appendRequest('POST',url)
 					const response=await fetch(url,{
 						signal: abortSignal,
 						method: 'POST',
