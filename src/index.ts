@@ -11,6 +11,8 @@ import ElementsStage from './stages/elements-stage'
 import AuthLanding from './auth-landing'
 import InputOsmUrlProvider from './input-osm-url-provider'
 import FixedOsmUrlProvider from './fixed-osm-url-provider'
+import InputOsmClientIdProvider from './input-osm-client-id-provider'
+import FixedOsmClientIdProvider from './fixed-osm-client-id-provider'
 import PopupWindowOpener from './popup-window-opener'
 import AbortManager from './abort-manager'
 import { makeElement } from './html'
@@ -33,18 +35,24 @@ function main(): void {
 	authStageSpecs.push([
 		`dev server`,'dev',new (isFileProtocol?AuthManualGrantStage:AuthAutoGrantStage)(
 			new FixedOsmUrlProvider('https://master.apis.dev.openstreetmap.org/'),
+			(authLanding.url=='https://antonkhorev.github.io/osm-redact-ui/'
+				? new FixedOsmClientIdProvider('2pHyb08qEaiSM4x4qUmaAkoJg5v6QL-VMLfrFofNoJY')
+				: new InputOsmClientIdProvider
+			),
 			abortManager,connectionShowStage,popupWindowOpener,authLanding
 		)
 	])
 	if (!isFileProtocol) authStageSpecs.push([
 		`automatic`,'auto',new AuthAutoGrantStage(
 			new InputOsmUrlProvider,
+			new InputOsmClientIdProvider,
 			abortManager,connectionShowStage,popupWindowOpener,authLanding
 		)
 	])
 	authStageSpecs.push([
 		`by manually copying a code`,'code',new AuthManualGrantStage(
 			new InputOsmUrlProvider,
+			new InputOsmClientIdProvider,
 			abortManager,connectionShowStage,popupWindowOpener
 		)
 	],[

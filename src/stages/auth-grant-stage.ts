@@ -1,25 +1,21 @@
 import AuthStage from './auth-stage'
 import ConnectionShowStage from './connection-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
+import OsmClientIdProvider from '../osm-client-id-provider'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
 import AuthFlow from '../auth-flow'
 import { isObject } from '../types'
-import { makeElement, makeDiv, makeLabel } from '../html'
 
 export default abstract class AuthGrantStage extends AuthStage {
-	private $clientIdInput=makeElement('input')()()
-
 	constructor(
 		osmUrlProvider: OsmUrlProvider,
+		private readonly osmClientIdProvider: OsmClientIdProvider,
 		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
 	) {
 		super(osmUrlProvider)
 
 		abortManager.addRunControl(this.runControl)
-
-		this.$clientIdInput.name='auth-client-id'
-		this.$clientIdInput.required=true
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
@@ -27,7 +23,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
 				const osmWebRoot=this.osmWebRoot
-				const clientId=this.$clientIdInput.value.trim()
+				const clientId=osmClientIdProvider.clientId
 				const authFlow=await this.getAuthFlow(clientId)
 				let code: string
 				{
@@ -63,13 +59,7 @@ export default abstract class AuthGrantStage extends AuthStage {
 	}
 
 	protected renderPreRunControlWidgets(): HTMLElement[] {
-		return [
-			makeDiv('input-group')(
-				makeLabel()(
-					`Application client id`, this.$clientIdInput
-				)
-			)
-		]
+		return this.osmClientIdProvider.getWidgets()
 	}
 
 	protected abstract getAuthFlow(clientId: string): Promise<AuthFlow>

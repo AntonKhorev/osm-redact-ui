@@ -1,6 +1,7 @@
 import AuthGrantStage from './auth-grant-stage'
 import ConnectionShowStage from './connection-show-stage'
 import OsmUrlProvider from '../osm-url-provider'
+import OsmClientIdProvider from '../osm-client-id-provider'
 import PopupWindowOpener from '../popup-window-opener'
 import AbortManager from '../abort-manager'
 import AuthFlow from '../auth-flow'
@@ -12,10 +13,10 @@ export default class AuthManualGrantStage extends AuthGrantStage {
 	private $authCodeButton=makeElement('button')()(`Accept code`)
 
 	constructor(
-		osmUrlProvider: OsmUrlProvider,
+		osmUrlProvider: OsmUrlProvider, osmClientIdProvider: OsmClientIdProvider,
 		abortManager: AbortManager, connectionShowStage: ConnectionShowStage, popupWindowOpener: PopupWindowOpener
 	) {
-		super(osmUrlProvider,abortManager,connectionShowStage,popupWindowOpener)
+		super(osmUrlProvider,osmClientIdProvider,abortManager,connectionShowStage,popupWindowOpener)
 
 		this.$authCodeInput.name='auth-code'
 		this.$authCodeForm.hidden=true
