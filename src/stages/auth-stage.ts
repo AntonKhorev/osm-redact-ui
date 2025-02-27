@@ -34,7 +34,7 @@ export default abstract class AuthStage {
 		return this.osmUrlProvider.apiRoot
 	}
 
-	render() {
+	start() {
 		this.$form.append(
 			...this.osmUrlProvider.getWidgets(),
 			...this.renderPreRunControlWidgets(),

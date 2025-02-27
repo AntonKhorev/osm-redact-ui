@@ -25,7 +25,7 @@ export default class AuthTypeSelectStage {
 		this.$authTypeSelect.oninput=updateAuthStagesVisibility
 	}
 
-	render() {
+	start() {
 		this.$form.append(
 			makeDiv('input-group')(
 				makeLabel()(

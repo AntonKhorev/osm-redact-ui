@@ -1,14 +1,19 @@
+import PrefixedStorage from './prefixed-storage'
 import PrefixedArrayStorage from './prefixed-array-storage'
 import { OsmAuthData, isOsmAuthData, isOsmAuthDataWithSameToken } from './osm-auth-data'
 
 export default class AuthStorage {
-	constructor(
-		private readonly storage: PrefixedArrayStorage
-	) {}
+	private readonly authArrayStorage: PrefixedArrayStorage
 
-	add(osmAuthData: OsmAuthData): void {
-		for (const index of this.storage.getIndexes()) {
-			const value=this.storage.getItem(index)
+	constructor(
+		private readonly storage: PrefixedStorage
+	) {
+		this.authArrayStorage=new PrefixedArrayStorage(storage,'osmAuths')
+	}
+
+	addData(osmAuthData: OsmAuthData): void {
+		for (const index of this.authArrayStorage.getIndexes()) {
+			const value=this.authArrayStorage.getItem(index)
 
 			let json: unknown
 			try {
@@ -16,16 +21,60 @@ export default class AuthStorage {
 			} catch {}
 
 			if (!isOsmAuthData(json) || isOsmAuthDataWithSameToken(osmAuthData,json)) {
-				this.storage.removeItem(index)
+				this.authArrayStorage.removeItem(index)
 			}
 		}
 
-		this.storage.appendItem(JSON.stringify(osmAuthData))
+		const value=JSON.stringify(osmAuthData)
+		this.authArrayStorage.appendItem(value)
 	}
 
-	*list(): Iterable<OsmAuthData> {
-		for (const index of this.storage.getIndexes()) {
-			const value=this.storage.getItem(index)
+	removeDataPossiblyRemovingCurrentData(osmAuthData: OsmAuthData): boolean {
+		for (const index of this.authArrayStorage.getIndexes()) {
+			const value=this.authArrayStorage.getItem(index)
+
+			let json: unknown
+			try {
+				if (value!=null) json=JSON.parse(value)
+			} catch {}
+
+			if (!isOsmAuthData(json) || isOsmAuthDataWithSameToken(osmAuthData,json)) {
+				this.authArrayStorage.removeItem(index)
+			}
+		}
+
+		const currentData=this.currentData
+		if (currentData && isOsmAuthDataWithSameToken(osmAuthData,currentData)) {
+			this.currentData=undefined
+			return true
+		} else {
+			return false
+		}
+	}
+
+	get currentData(): OsmAuthData | undefined {
+		const value=this.storage.getItem('currentOsmAuth')
+
+		let json: unknown
+		try {
+			if (value!=null) json=JSON.parse(value)
+		} catch {}
+		
+		if (isOsmAuthData(json)) return json
+	}
+
+	set currentData(currentData: OsmAuthData | undefined) {
+		if (currentData) {
+			const value=JSON.stringify(currentData)
+			this.storage.setItem('currentOsmAuth',value)
+		} else {
+			this.storage.removeItem('currentOsmAuth')
+		}
+	}
+
+	*listData(): Iterable<OsmAuthData> {
+		for (const index of this.authArrayStorage.getIndexes()) {
+			const value=this.authArrayStorage.getItem(index)
 
 			let json: unknown
 			try {

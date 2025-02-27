@@ -76,7 +76,7 @@ export default class ElementsStage {
 		}
 	}
 
-	render() {
+	start() {
 		this.$form.append(
 			makeDiv('input-group')(
 				makeLabel()(

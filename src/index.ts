@@ -9,11 +9,10 @@ import ChangesetStage from './stages/changeset-stage'
 import ElementsStage from './stages/elements-stage'
 
 import PrefixedStorage from './prefixed-storage'
-import PrefixedArrayStorage from './prefixed-array-storage'
 import AuthStorage from './auth-storage'
 
 import AuthLanding from './auth-landing'
-import CurrentOsmAuthManager from './current-osm-auth-manager'
+import OsmAuthManager from './osm-auth-manager'
 import InputOsmUrlProvider from './input-osm-url-provider'
 import FixedOsmUrlProvider from './fixed-osm-url-provider'
 import InputOsmClientIdProvider from './input-osm-client-id-provider'
@@ -28,16 +27,15 @@ function main(): void {
 	const authLanding=new AuthLanding
 	if (authLanding.land()) return
 
-	const prefixedStorage=new PrefixedStorage(localStorage,'osm-redact-ui-')
-	const authStorage=new AuthStorage(new PrefixedArrayStorage(prefixedStorage,'osm-auths'))
+	const prefixedStorage=new PrefixedStorage(localStorage,'osmRedactUi:')
 
-	const currentOsmAuthManager=new CurrentOsmAuthManager
+	const osmAuthManager=new OsmAuthManager(new AuthStorage(prefixedStorage))
 	const popupWindowOpener=new PopupWindowOpener
 	const abortManager=new AbortManager
 
-	const elementsStage=new ElementsStage(abortManager,currentOsmAuthManager.provider)
-	const changesetStage=new ChangesetStage(abortManager,currentOsmAuthManager.provider,elementsStage)
-	const connectionShowStage=new AuthShowStage(currentOsmAuthManager,authStorage)
+	const elementsStage=new ElementsStage(abortManager,osmAuthManager.currentProvider)
+	const changesetStage=new ChangesetStage(abortManager,osmAuthManager.currentProvider,elementsStage)
+	const connectionShowStage=new AuthShowStage(osmAuthManager)
 
 	const authStages: AuthStage[] = []
 	const isFileProtocol=location.protocol=='file:'
@@ -90,11 +88,11 @@ function main(): void {
 		)
 	)
 
-	authTypeSelectStage.render()
+	authTypeSelectStage.start()
 	for (const stage of authStages) {
-		stage.render()
+		stage.start()
 	}
-	connectionShowStage.render()
-	changesetStage.render()
-	elementsStage.render()
+	connectionShowStage.start()
+	changesetStage.start()
+	elementsStage.start()
 }

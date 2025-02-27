@@ -101,7 +101,7 @@ export default class ChangesetStage {
 		}
 	}
 
-	render() {
+	start() {
 		this.$form.append(
 			makeDiv('input-group')(
 				makeLabel()(
