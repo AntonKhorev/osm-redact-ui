@@ -1,8 +1,8 @@
-import AuthStage from './auth-stage'
+import AuthNewStage from './auth-new-stage'
 import OsmUrlProvider from './osm-url-provider'
 import AbortManager from '../../abort-manager'
 
-export default class AuthAnonymousStage extends AuthStage {
+export default class AuthNewAnonymousStage extends AuthNewStage {
 	constructor(
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider,

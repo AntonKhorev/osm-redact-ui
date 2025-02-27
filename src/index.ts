@@ -1,9 +1,9 @@
-import AuthStage from './stages/auth/auth-stage'
 import AuthTypeSelectStage from './stages/auth/auth-type-select-stage'
-import AuthAnonymousStage from './stages/auth/auth-anonymous-stage'
-import AuthTokenStage from './stages/auth/auth-token-stage'
-import AuthManualGrantStage from './stages/auth/auth-manual-grant-stage'
-import AuthAutoGrantStage from './stages/auth/auth-auto-grant-stage'
+import AuthNewStage from './stages/auth/auth-new-stage'
+import AuthNewAnonymousStage from './stages/auth/auth-new-anonymous-stage'
+import AuthNewTokenStage from './stages/auth/auth-new-token-stage'
+import AuthNewManualGrantStage from './stages/auth/auth-new-manual-grant-stage'
+import AuthNewAutoGrantStage from './stages/auth/auth-new-auto-grant-stage'
 import AuthShowStage from './stages/auth/auth-show-stage'
 import ChangesetStage from './stages/changeset-stage'
 import ElementsStage from './stages/elements-stage'
@@ -37,10 +37,10 @@ function main(): void {
 	const changesetStage=new ChangesetStage(abortManager,osmAuthManager.currentProvider,elementsStage)
 	const connectionShowStage=new AuthShowStage(osmAuthManager)
 
-	const authStages: AuthStage[] = []
+	const authStages: AuthNewStage[] = []
 	const isFileProtocol=location.protocol=='file:'
 	authStages.push(
-		new (isFileProtocol?AuthManualGrantStage:AuthAutoGrantStage)(
+		new (isFileProtocol?AuthNewManualGrantStage:AuthNewAutoGrantStage)(
 			`Authorization on dev server`,'https://master.apis.dev.openstreetmap.org/',
 			new FixedOsmUrlProvider('https://master.apis.dev.openstreetmap.org/'),
 			(authLanding.url=='https://antonkhorev.github.io/osm-redact-ui/'
@@ -51,7 +51,7 @@ function main(): void {
 		)
 	)
 	if (!isFileProtocol) authStages.push(
-		new AuthAutoGrantStage(
+		new AuthNewAutoGrantStage(
 			`Automatic authorization`,'auto',
 			new InputOsmUrlProvider,
 			new InputOsmClientIdProvider,
@@ -59,17 +59,17 @@ function main(): void {
 		)
 	)
 	authStages.push(
-		new AuthManualGrantStage(
+		new AuthNewManualGrantStage(
 			`Authorization by manually copying a code`,'code',
 			new InputOsmUrlProvider,
 			new InputOsmClientIdProvider,
 			abortManager,popupWindowOpener
-		),new AuthTokenStage(
+		),new AuthNewTokenStage(
 			`Authorization by entering an existing token`,'token',
 			new InputOsmUrlProvider,
 			abortManager
 		),
-		new AuthAnonymousStage(
+		new AuthNewAnonymousStage(
 			`Anonymous authorization`,'anonymous',
 			new InputOsmUrlProvider,
 			abortManager

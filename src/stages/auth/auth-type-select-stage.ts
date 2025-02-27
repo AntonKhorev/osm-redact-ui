@@ -1,4 +1,4 @@
-import AuthStage from './auth-stage'
+import AuthNewStage from './auth-new-stage'
 import { makeElement, makeDiv, makeLabel } from '../../html'
 
 export default class AuthTypeSelectStage {
@@ -6,11 +6,11 @@ export default class AuthTypeSelectStage {
 	protected $form=makeElement('form')()()
 
 	$section=makeElement('section')()(
-		makeElement('h2')()(`Authorization type`)
+		makeElement('h3')()(`Authorization type`)
 	)
 
 	constructor(
-		authStages: AuthStage[]
+		authStages: AuthNewStage[]
 	) {
 		this.$authTypeSelect.append(
 			...authStages.map(stage=>new Option(stage.title,stage.type))

@@ -9,7 +9,7 @@ export default class AuthShowStage {
 
 	private readonly $form=makeElement('form')()()
 	readonly $section=makeElement('section')()(
-		makeElement('h2')()(`Current server and authorization`),
+		makeElement('h3')()(`Current server and authorization`),
 		this.$form
 	)
 

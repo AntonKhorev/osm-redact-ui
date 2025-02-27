@@ -1,4 +1,4 @@
-import AuthGrantStage from './auth-grant-stage'
+import AuthNewGrantStage from './auth-new-grant-stage'
 import OsmUrlProvider from './osm-url-provider'
 import OsmClientIdProvider from './osm-client-id-provider'
 import AuthLanding from '../../auth-landing'
@@ -6,7 +6,7 @@ import PopupWindowOpener from '../../popup-window-opener'
 import AbortManager from '../../abort-manager'
 import AuthFlow from '../../auth-flow'
 
-export default class AuthAutoGrantStage extends AuthGrantStage {
+export default class AuthNewAutoGrantStage extends AuthNewGrantStage {
 	constructor(
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider, osmClientIdProvider: OsmClientIdProvider,

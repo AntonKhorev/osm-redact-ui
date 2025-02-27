@@ -7,7 +7,7 @@ import OsmApi from '../../osm-api'
 import { makeElement } from '../../html'
 import { bubbleCustomEvent } from '../../events'
 
-export default abstract class AuthStage {
+export default abstract class AuthNewStage {
 	protected readonly authFlowFactory=new AuthFlowFactory
 	
 	protected readonly runControl=new RunControl(
@@ -42,7 +42,7 @@ export default abstract class AuthStage {
 		)
 
 		this.$section.append(
-			makeElement('h2')()(this.title),
+			makeElement('h3')()(this.title),
 			this.$form,
 			this.runLogger.$widget,
 			...this.renderPostRunControlWidgets()
