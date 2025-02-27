@@ -34,6 +34,7 @@ export default class PrefixedArrayStorage {
 				result.push(Number(indexString))
 			}
 		}
+		result.sort((a,b)=>a-b)
 		return result
 	}
 
