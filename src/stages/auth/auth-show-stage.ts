@@ -62,12 +62,31 @@ export default class AuthShowStage {
 				bubbleEvent(this.$section,'osmRedactUi:currentAuthUpdate')
 			}
 
-			const $removeButton=makeElement('button')()()
+			const $removeButton=makeElement('button')()(`Remove`)
 			$removeButton.type='button'
-			$removeButton.onclick=()=>{
+			$removeButton.onclick=async()=>{
+				try {
+					if (osmAuthData.user && osmAuthData.user.clientId) {
+						const url=`${osmAuthData.webRoot}oauth2/revoke`
+						// this.runLogger.appendRequest('POST',url) // TODO
+						await fetch(url,{
+							// signal: abortSignal, // TODO
+							method: 'POST',
+							body: new URLSearchParams([
+								['token',osmAuthData.user.token],
+								['client_id',osmAuthData.user.clientId],
+							])
+						})
+						// don't need to throw on error
+						// TODO: log error
+					}
+				} catch (ex) {
+					console.log(ex)
+				}
 				if (this.osmAuthManager.removeDataPossiblyRemovingCurrentData(osmAuthData)) {
 					bubbleEvent(this.$section,'osmRedactUi:currentAuthUpdate')
 				}
+				this.updateAuthTable()
 			}
 
 			this.$authTable.append(
@@ -85,6 +104,9 @@ export default class AuthShowStage {
 					),
 					makeElement('td')()(
 						osmAuthData.user?.isModerator ? `★` : ``
+					),
+					makeElement('td')()(
+						$removeButton
 					)
 				)
 			)

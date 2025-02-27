@@ -1,7 +1,11 @@
 import { isObject, isArrayOfStrings } from './types'
 
-export type OsmAuthUserData = {
+export type OsmAuthOauthData = {
+	clientId?: string
 	token: string
+}
+
+export type OsmAuthUserData = OsmAuthOauthData & {
 	id: number
 	name: string
 	isModerator: boolean
@@ -9,6 +13,7 @@ export type OsmAuthUserData = {
 export function isOsmAuthUserData(json: unknown): json is OsmAuthUserData {
 	return (
 		isObject(json) &&
+		(!('clientId' in json) || typeof json.clientId == 'string') &&
 		'token' in json && typeof json.token == 'string' &&
 		'id' in json && typeof json.id == 'number' &&
 		'name' in json && typeof json.name == 'string' &&
@@ -45,7 +50,7 @@ export function isOsmAuthDataWithSameToken(data1: Readonly<OsmAuthData>, data2: 
 	)
 }
 
-export function convertOsmUserDetailsJsonToOsmAuthUserData(json: unknown, token: string): OsmAuthUserData {
+export function convertOsmUserDetailsJsonToOsmAuthUserData(json: unknown, oauth: OsmAuthOauthData): OsmAuthUserData {
 	if (!(
 		isObject(json) && 'user' in json && isObject(json.user) &&
 		'id' in json.user && typeof json.user.id == 'number' &&
@@ -54,7 +59,7 @@ export function convertOsmUserDetailsJsonToOsmAuthUserData(json: unknown, token:
 		throw new TypeError(`received invalid user details`)
 	}
 	return {
-		token,
+		...oauth,
 		id: json.user.id,
 		name: json.user.display_name,
 		isModerator: 'roles' in json.user && isArrayOfStrings(json.user.roles) && json.user.roles.includes('moderator')

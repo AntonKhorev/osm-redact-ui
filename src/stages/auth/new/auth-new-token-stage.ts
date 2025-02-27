@@ -23,7 +23,7 @@ export default class AuthNewTokenStage extends AuthNewStage {
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
 				const token=this.$tokenInput.value.trim()
-				await this.passToken(abortSignal,token)
+				await this.passToken(abortSignal,{token})
 			} catch (ex) {
 				console.log(ex)
 			}

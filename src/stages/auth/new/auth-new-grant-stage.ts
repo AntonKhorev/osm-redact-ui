@@ -2,11 +2,14 @@ import AuthNewStage from './auth-new-stage'
 import OsmUrlProvider from './osm-url-provider'
 import OsmClientIdProvider from './osm-client-id-provider'
 import PopupWindowOpener from '../../../popup-window-opener'
+import AuthFlowFactory from '../../../auth-flow-factory'
 import AbortManager from '../../../abort-manager'
 import AuthFlow from '../../../auth-flow'
 import { isObject } from '../../../types'
 
 export default abstract class AuthNewGrantStage extends AuthNewStage {
+	protected readonly authFlowFactory=new AuthFlowFactory
+
 	constructor(
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider,
@@ -49,7 +52,7 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 					if (!response.ok) throw new TypeError(`failed to fetch token`)
 					const json=await response.json()
 					const token=getTokenFromTokenResponseJson(json)
-					await this.passToken(abortSignal,token)
+					await this.passToken(abortSignal,{clientId,token})
 				}
 			} catch (ex) {
 				console.log(ex)

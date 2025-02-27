@@ -1,15 +1,12 @@
 import RunControl from '../../../run-control'
 import RunLogger from '../../../run-logger'
-import AuthFlowFactory from '../../../auth-flow-factory'
 import OsmUrlProvider from './osm-url-provider'
-import { OsmAuthData, convertOsmUserDetailsJsonToOsmAuthUserData } from '../../../osm-auth-data'
+import { OsmAuthData, OsmAuthOauthData, convertOsmUserDetailsJsonToOsmAuthUserData } from '../../../osm-auth-data'
 import OsmApi from '../../../osm-api'
 import { makeElement } from '../../../html'
 import { bubbleCustomEvent } from '../../../events'
 
 export default abstract class AuthNewStage {
-	protected readonly authFlowFactory=new AuthFlowFactory
-	
 	protected readonly runControl=new RunControl(
 		`Authorize`,
 		`Abort authorization`
@@ -57,17 +54,17 @@ export default abstract class AuthNewStage {
 		return []
 	}
 
-	protected async passToken(abortSignal: AbortSignal, token: string): Promise<void> {
+	protected async passToken(abortSignal: AbortSignal, oauth?: OsmAuthOauthData): Promise<void> {
 		const osmAuthData: OsmAuthData = {
 			webRoot: this.osmWebRoot,
 			apiRoot: this.osmApiRoot,
 		}
-		if (token) {
-			const osmApi=new OsmApi(osmAuthData.apiRoot,token,this.runLogger,abortSignal)
+		if (oauth) {
+			const osmApi=new OsmApi(osmAuthData.apiRoot,oauth.token,this.runLogger,abortSignal)
 			const response=await osmApi.get(`user/details.json`)
 			if (!response.ok) throw new TypeError(`failed to fetch user details`)
 			const json=await response.json()
-			osmAuthData.user=convertOsmUserDetailsJsonToOsmAuthUserData(json,token)
+			osmAuthData.user=convertOsmUserDetailsJsonToOsmAuthUserData(json,oauth)
 		}
 		bubbleCustomEvent(this.$section,'osmRedactUi:newAuth',osmAuthData)
 	}

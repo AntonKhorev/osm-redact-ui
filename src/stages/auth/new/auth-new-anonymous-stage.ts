@@ -17,8 +17,7 @@ export default class AuthNewAnonymousStage extends AuthNewStage {
 			this.runLogger.clear()
 			const abortSignal=abortManager.enterStage(this.runControl)
 			try {
-				const token=''
-				await this.passToken(abortSignal,token)
+				await this.passToken(abortSignal)
 			} catch (ex) {
 				console.log(ex)
 			}
