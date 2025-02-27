@@ -1,10 +1,10 @@
 import AuthNewGrantStage from './auth-new-grant-stage'
 import OsmUrlProvider from './osm-url-provider'
 import OsmClientIdProvider from './osm-client-id-provider'
-import PopupWindowOpener from '../../popup-window-opener'
-import AbortManager from '../../abort-manager'
-import AuthFlow from '../../auth-flow'
-import { makeElement, makeDiv, makeLabel } from '../../html'
+import PopupWindowOpener from '../../../popup-window-opener'
+import AbortManager from '../../../abort-manager'
+import AuthFlow from '../../../auth-flow'
+import { makeElement, makeDiv, makeLabel } from '../../../html'
 
 export default class AuthNewManualGrantStage extends AuthNewGrantStage {
 	private $authCodeForm=makeElement('form')('formatted')()

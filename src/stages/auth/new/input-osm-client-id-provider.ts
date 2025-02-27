@@ -1,4 +1,4 @@
-import { makeElement, makeDiv, makeLabel } from '../../html'
+import { makeElement, makeDiv, makeLabel } from '../../../html'
 import OsmClientIdProvider from './osm-client-id-provider'
 
 export default class InputOsmClientIdProvider extends OsmClientIdProvider {

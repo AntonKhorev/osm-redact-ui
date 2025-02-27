@@ -1,4 +1,4 @@
-import AuthNewStage from './auth-new-stage'
+import AuthNewStage from './new/auth-new-stage'
 import { makeElement, makeDiv, makeLabel } from '../../html'
 
 export default class AuthTypeSelectStage {

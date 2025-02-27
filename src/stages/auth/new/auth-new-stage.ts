@@ -1,11 +1,11 @@
-import RunControl from '../../run-control'
-import RunLogger from '../../run-logger'
-import AuthFlowFactory from '../../auth-flow-factory'
+import RunControl from '../../../run-control'
+import RunLogger from '../../../run-logger'
+import AuthFlowFactory from '../../../auth-flow-factory'
 import OsmUrlProvider from './osm-url-provider'
-import { OsmAuthData, convertOsmUserDetailsJsonToOsmAuthUserData } from '../../osm-auth-data'
-import OsmApi from '../../osm-api'
-import { makeElement } from '../../html'
-import { bubbleCustomEvent } from '../../events'
+import { OsmAuthData, convertOsmUserDetailsJsonToOsmAuthUserData } from '../../../osm-auth-data'
+import OsmApi from '../../../osm-api'
+import { makeElement } from '../../../html'
+import { bubbleCustomEvent } from '../../../events'
 
 export default abstract class AuthNewStage {
 	protected readonly authFlowFactory=new AuthFlowFactory

@@ -1,7 +1,7 @@
 import AuthNewStage from './auth-new-stage'
 import OsmUrlProvider from './osm-url-provider'
-import AbortManager from '../../abort-manager'
-import { makeElement, makeDiv, makeLabel } from '../../html'
+import AbortManager from '../../../abort-manager'
+import { makeElement, makeDiv, makeLabel } from '../../../html'
 
 export default class AuthNewTokenStage extends AuthNewStage {
 	private $tokenInput=makeElement('input')()()
