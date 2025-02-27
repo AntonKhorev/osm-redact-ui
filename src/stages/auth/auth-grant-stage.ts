@@ -1,10 +1,10 @@
 import AuthStage from './auth-stage'
-import OsmUrlProvider from '../osm-url-provider'
-import OsmClientIdProvider from '../osm-client-id-provider'
-import PopupWindowOpener from '../popup-window-opener'
-import AbortManager from '../abort-manager'
-import AuthFlow from '../auth-flow'
-import { isObject } from '../types'
+import OsmUrlProvider from '../../osm-url-provider'
+import OsmClientIdProvider from '../../osm-client-id-provider'
+import PopupWindowOpener from '../../popup-window-opener'
+import AbortManager from '../../abort-manager'
+import AuthFlow from '../../auth-flow'
+import { isObject } from '../../types'
 
 export default abstract class AuthGrantStage extends AuthStage {
 	constructor(

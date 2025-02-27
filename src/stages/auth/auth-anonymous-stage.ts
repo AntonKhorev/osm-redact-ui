@@ -1,6 +1,6 @@
 import AuthStage from './auth-stage'
-import OsmUrlProvider from '../osm-url-provider'
-import AbortManager from '../abort-manager'
+import OsmUrlProvider from '../../osm-url-provider'
+import AbortManager from '../../abort-manager'
 
 export default class AuthAnonymousStage extends AuthStage {
 	constructor(

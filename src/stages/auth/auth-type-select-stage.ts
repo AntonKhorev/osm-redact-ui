@@ -1,5 +1,5 @@
 import AuthStage from './auth-stage'
-import { makeElement, makeDiv, makeLabel } from '../html'
+import { makeElement, makeDiv, makeLabel } from '../../html'
 
 export default class AuthTypeSelectStage {
 	private $authTypeSelect=makeElement('select')()()

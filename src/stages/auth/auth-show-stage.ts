@@ -1,8 +1,7 @@
-import OsmAuthManager from '../osm-auth-manager'
-import AuthStorage from '../auth-storage'
-import { isOsmAuthDataWithSameToken } from '../osm-auth-data'
-import { makeElement, makeLink } from '../html'
-import { bubbleEvent } from '../events'
+import OsmAuthManager from '../../osm-auth-manager'
+import { isOsmAuthDataWithSameToken } from '../../osm-auth-data'
+import { makeElement, makeLink } from '../../html'
+import { bubbleEvent } from '../../events'
 
 export default class AuthShowStage {
 	private readonly $noCurrentAuthorizationMessage=makeElement('p')()(`No current authorization`)
