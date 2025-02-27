@@ -12,14 +12,7 @@ export default class AuthStorage {
 	}
 
 	addData(osmAuthData: OsmAuthData): void {
-		for (const index of this.authArrayStorage.getIndexes()) {
-			const value=this.authArrayStorage.getItem(index)
-
-			let json: unknown
-			try {
-				if (value!=null) json=JSON.parse(value)
-			} catch {}
-
+		for (const [index,json] of this.listIndexesAndJsons()) {
 			if (!isOsmAuthData(json) || isOsmAuthDataWithSameToken(osmAuthData,json)) {
 				this.authArrayStorage.removeItem(index)
 			}
@@ -29,15 +22,25 @@ export default class AuthStorage {
 		this.authArrayStorage.appendItem(value)
 	}
 
+	updateDataPossiblyUpdatingCurrentData(osmAuthData: OsmAuthData): boolean {
+		for (const [index,json] of this.listIndexesAndJsons()) {
+			if (isOsmAuthData(json) && isOsmAuthDataWithSameToken(osmAuthData,json)) {
+				const newValue=JSON.stringify(osmAuthData)
+				this.authArrayStorage.setItem(index,newValue)
+			}
+		}
+
+		const currentData=this.currentData
+		if (currentData && isOsmAuthDataWithSameToken(osmAuthData,currentData)) {
+			this.currentData=osmAuthData
+			return true
+		} else {
+			return false
+		}
+	}
+
 	removeDataPossiblyRemovingCurrentData(osmAuthData: OsmAuthData): boolean {
-		for (const index of this.authArrayStorage.getIndexes()) {
-			const value=this.authArrayStorage.getItem(index)
-
-			let json: unknown
-			try {
-				if (value!=null) json=JSON.parse(value)
-			} catch {}
-
+		for (const [index,json] of this.listIndexesAndJsons()) {
 			if (!isOsmAuthData(json) || isOsmAuthDataWithSameToken(osmAuthData,json)) {
 				this.authArrayStorage.removeItem(index)
 			}
@@ -73,6 +76,12 @@ export default class AuthStorage {
 	}
 
 	*listData(): Iterable<OsmAuthData> {
+		for (const [index,json] of this.listIndexesAndJsons()) {
+			if (isOsmAuthData(json)) yield json
+		}
+	}
+
+	private *listIndexesAndJsons(): Iterable<[index:number,json:unknown]> {
 		for (const index of this.authArrayStorage.getIndexes()) {
 			const value=this.authArrayStorage.getItem(index)
 
@@ -81,7 +90,7 @@ export default class AuthStorage {
 				if (value!=null) json=JSON.parse(value)
 			} catch {}
 
-			if (isOsmAuthData(json)) yield json
+			yield [index,json]
 		}
 	}
 }

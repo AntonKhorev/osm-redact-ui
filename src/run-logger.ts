@@ -1,16 +1,11 @@
 import { makeElement, makeLink } from "./html"
 
 export default class RunLogger {
-	private $list=makeElement('ul')()()
-	private $summary=makeElement('summary')()()
-	$widget=makeElement('details')('log')(
-		this.$summary,
+	private readonly $list=makeElement('ul')()()
+	readonly $widget=makeElement('details')('log')(
+		makeElement('summary')()(`Log`),
 		this.$list
 	)
-
-	constructor(summary: string) {
-		this.$summary.textContent=summary
-	}
 
 	clear(): void {
 		this.$list.replaceChildren()

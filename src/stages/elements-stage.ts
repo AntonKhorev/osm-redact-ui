@@ -11,7 +11,7 @@ export default class ElementsStage {
 		`Redact target elements`,
 		`Abort redacting target elements`
 	)
-	private readonly runLogger=new RunLogger(`Redact log`)
+	private readonly runLogger=new RunLogger
 
 	readonly $targetTextarea=makeElement('textarea')()()
 

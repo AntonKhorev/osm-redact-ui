@@ -32,6 +32,16 @@ export default class OsmAuthManager {
 		this.storage.addData(osmAuthData)
 	}
 
+	updateDataPossiblyUpdatingCurrentData(osmAuthData: OsmAuthData): boolean {
+		if (this.storage.updateDataPossiblyUpdatingCurrentData(osmAuthData)) {
+			this.currentAuthMemoized=false
+			this.currentAuth=undefined
+			return true
+		} else {
+			return false
+		}
+	}
+
 	removeDataPossiblyRemovingCurrentData(osmAuthData: OsmAuthData): boolean {
 		if (this.storage.removeDataPossiblyRemovingCurrentData(osmAuthData)) {
 			this.currentAuthMemoized=false

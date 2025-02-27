@@ -13,7 +13,7 @@ export default class ChangesetStage {
 		`Fetch target elements`,
 		`Abort fetching target elements`
 	)
-	private readonly runLogger=new RunLogger(`Fetch log`)
+	private readonly runLogger=new RunLogger
 
 	private readonly $redactedChangesetInput=makeElement('input')()()
 	protected readonly $form=makeElement('form')('formatted')()
