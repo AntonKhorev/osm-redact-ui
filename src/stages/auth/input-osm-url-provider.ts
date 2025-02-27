@@ -1,4 +1,4 @@
-import { makeElement, makeDiv, makeLabel } from './html'
+import { makeElement, makeDiv, makeLabel } from '../../html'
 import OsmUrlProvider from './osm-url-provider'
 
 export default class InputOsmUrlProvider extends OsmUrlProvider {
