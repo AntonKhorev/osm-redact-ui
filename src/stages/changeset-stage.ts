@@ -16,7 +16,7 @@ export default class ChangesetStage {
 	private readonly runLogger=new RunLogger(`Fetch log`)
 
 	private readonly $redactedChangesetInput=makeElement('input')()()
-	protected readonly $form=makeElement('form')()()
+	protected readonly $form=makeElement('form')('formatted')()
 
 	private readonly $expectedChangesCountOutput=makeElement('output')()()
 	private readonly $downloadedChangesCountOutput=makeElement('output')()()

@@ -7,7 +7,7 @@ import AuthFlow from '../auth-flow'
 import { makeElement, makeDiv, makeLabel } from '../html'
 
 export default class AuthManualGrantStage extends AuthGrantStage {
-	private $authCodeForm=makeElement('form')()()
+	private $authCodeForm=makeElement('form')('formatted')()
 	private $authCodeInput=makeElement('input')()()
 	private $authCodeButton=makeElement('button')()(`Accept code`)
 

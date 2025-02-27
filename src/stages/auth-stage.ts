@@ -16,7 +16,7 @@ export default abstract class AuthStage {
 	)
 	protected readonly runLogger=new RunLogger(`Authorization log`)
 
-	protected readonly $form=makeElement('form')()()
+	protected readonly $form=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()()
 

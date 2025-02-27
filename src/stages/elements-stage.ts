@@ -16,7 +16,7 @@ export default class ElementsStage {
 	readonly $targetTextarea=makeElement('textarea')()()
 
 	private readonly $redactionInput=makeElement('input')()()
-	protected readonly $form=makeElement('form')()()
+	protected readonly $form=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target elements`)
