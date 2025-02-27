@@ -6,11 +6,43 @@ export type OsmAuthUserData = {
 	name: string
 	isModerator: boolean
 }
+export function isOsmAuthUserData(json: unknown): json is OsmAuthUserData {
+	return (
+		isObject(json) &&
+		'token' in json && typeof json.token == 'string' &&
+		'id' in json && typeof json.id == 'number' &&
+		'name' in json && typeof json.name == 'string' &&
+		'isModerator' in json && typeof json.isModerator == 'boolean'
+	)
+}
 
 export type OsmAuthData = {
 	webRoot: string
 	apiRoot: string
 	user?: OsmAuthUserData
+}
+export function isOsmAuthData(json: unknown): json is OsmAuthData {
+	return (
+		isObject(json) &&
+		'webRoot' in json && typeof json.webRoot == 'string' &&
+		'apiRoot' in json && typeof json.apiRoot == 'string' &&
+		(!('user' in json) || isOsmAuthUserData(json.user))
+	)
+}
+
+export function isOsmAuthDataWithSameToken(data1: Readonly<OsmAuthData>, data2: Readonly<OsmAuthData>): boolean {
+	return (
+		data1.webRoot==data2.webRoot &&
+		data1.apiRoot==data2.apiRoot &&
+		(
+			(
+				data1.user==null && data2.user==null
+			) || (
+				data1.user!=null && data2.user!=null &&
+				data1.user.token==data2.user.token
+			)
+		)
+	)
 }
 
 export function convertOsmUserDetailsJsonToOsmAuthUserData(json: unknown, token: string): OsmAuthUserData {

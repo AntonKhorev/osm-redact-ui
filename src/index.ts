@@ -8,6 +8,10 @@ import AuthShowStage from './stages/auth-show-stage'
 import ChangesetStage from './stages/changeset-stage'
 import ElementsStage from './stages/elements-stage'
 
+import PrefixedStorage from './prefixed-storage'
+import PrefixedArrayStorage from './prefixed-array-storage'
+import AuthStorage from './auth-storage'
+
 import AuthLanding from './auth-landing'
 import CurrentOsmAuthManager from './current-osm-auth-manager'
 import InputOsmUrlProvider from './input-osm-url-provider'
@@ -24,13 +28,16 @@ function main(): void {
 	const authLanding=new AuthLanding
 	if (authLanding.land()) return
 
+	const prefixedStorage=new PrefixedStorage(localStorage,'osm-redact-ui-')
+	const authStorage=new AuthStorage(new PrefixedArrayStorage(prefixedStorage,'osm-auths'))
+
 	const currentOsmAuthManager=new CurrentOsmAuthManager
 	const popupWindowOpener=new PopupWindowOpener
 	const abortManager=new AbortManager
 
 	const elementsStage=new ElementsStage(abortManager,currentOsmAuthManager.provider)
 	const changesetStage=new ChangesetStage(abortManager,currentOsmAuthManager.provider,elementsStage)
-	const connectionShowStage=new AuthShowStage(currentOsmAuthManager)
+	const connectionShowStage=new AuthShowStage(currentOsmAuthManager,authStorage)
 
 	const authStages: AuthStage[] = []
 	const isFileProtocol=location.protocol=='file:'
