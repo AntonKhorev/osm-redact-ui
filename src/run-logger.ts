@@ -31,7 +31,11 @@ export default class RunLogger {
 
 	appendOperation(text: string, url?: string): void {
 		const $li=makeElement('li')()(text)
-		if (url) $li.append(` `,makeLink(url,url))
+		if (url) $li.append(` `,
+			makeElement('code')()(
+				makeLink(url,url)
+			)
+		)
 		this.$list.append($li)
 	}
 }
