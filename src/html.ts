@@ -14,5 +14,6 @@ export function makeLink(text: string, href: string): HTMLAnchorElement {
 	const $link=document.createElement('a')
 	$link.textContent=text
 	$link.href=href
+	$link.target='_blank'
 	return $link
 }
