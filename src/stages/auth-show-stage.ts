@@ -40,7 +40,7 @@ export default class AuthShowStage {
 						),
 						makeElement('td')()(
 							osmAuthData.user
-								? makeLink(osmAuthData.user.name,`${osmAuthData.webRoot}/user/${encodeURIComponent(osmAuthData.user.name)}`)
+								? makeLink(osmAuthData.user.name,`${osmAuthData.webRoot}user/${encodeURIComponent(osmAuthData.user.name)}`)
 								: makeElement('em')()(`unauthorized`)
 						),
 						makeElement('td')()(
