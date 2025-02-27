@@ -16,15 +16,21 @@ import OsmAuthManager from '../osm-auth-manager'
 import AbortManager from '../abort-manager'
 import PopupWindowOpener from '../popup-window-opener'
 import AuthLanding from '../auth-landing'
-import { makeElement } from '../html'
+import { makeElement, makeLink } from '../html'
 
 export default class AuthStage {
 	private readonly authShowStage: AuthShowStage
 	private readonly authNewStages: AuthNewStage[] = []
 	private readonly authTypeSelectStage: AuthTypeSelectStage
 
+	private $summary=makeElement('summary')()()
+	private readonly $details=makeElement('details')()(
+		this.$summary
+	)
+
 	readonly $section=makeElement('section')()(
-		makeElement('h2')()(`Authorization`)
+		makeElement('h2')()(`Authorization`),
+		this.$details
 	)
 
 	constructor(osmAuthManager: OsmAuthManager, abortManager: AbortManager, popupWindowOpener: PopupWindowOpener, authLanding: AuthLanding) {
@@ -69,10 +75,35 @@ export default class AuthStage {
 		)
 
 		this.authTypeSelectStage=new AuthTypeSelectStage(this.authNewStages)
+
+		this.$details.open=!osmAuthManager.currentData
+		const updateSummary=()=>{
+			const osmAuthData=osmAuthManager.currentData
+			if (osmAuthData && osmAuthData.user) {
+				this.$summary.replaceChildren(
+					`Currently authorized on `,
+					makeLink(osmAuthData.webRoot,osmAuthData.webRoot),
+					` as `,
+					makeLink(osmAuthData.user.name,`${osmAuthData.webRoot}user/${encodeURIComponent(osmAuthData.user.name)}`),
+				)
+			} else if (osmAuthData) {
+				this.$summary.replaceChildren(
+					`Currently accessing `,
+					makeLink(osmAuthData.webRoot,osmAuthData.webRoot),
+					`anonymously`
+				)
+			} else {
+				this.$summary.replaceChildren(
+					`Currently not accessing any server`
+				)
+			}
+		}
+		updateSummary()
+		document.body.addEventListener('osmRedactUi:currentAuthUpdate',updateSummary)
 	}
 
 	start(): void {
-		this.$section.append(
+		this.$details.append(
 			this.authTypeSelectStage.$section,
 			...this.authNewStages.map(stage=>stage.$section),
 			this.authShowStage.$section,
