@@ -44,10 +44,12 @@ export default class ChangesetStage {
 			const abortSignal=abortManager.enterStage(this.runControl)
 			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runLogger,abortSignal)
 			try {
+				const changesetIdString=this.$redactedChangesetInput.value.trim()
+
 				let expectedChangesCount: number
 				{
 					const response=await osmApi.get(
-						`changeset/${encodeURIComponent(this.$redactedChangesetInput.value)}.json`
+						`changeset/${encodeURIComponent(changesetIdString)}.json`
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
 					const json=await response.json()
@@ -59,7 +61,7 @@ export default class ChangesetStage {
 				const startingVersions=new OsmElementLowerVersionCollection
 				{
 					const response=await osmApi.get(
-						`changeset/${encodeURIComponent(this.$redactedChangesetInput.value)}/download?show_redactions=true`
+						`changeset/${encodeURIComponent(changesetIdString)}/download?show_redactions=true`
 					)
 					if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
 					const text=await response.text()
