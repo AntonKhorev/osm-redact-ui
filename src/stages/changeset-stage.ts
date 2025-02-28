@@ -45,7 +45,7 @@ export default class ChangesetStage {
 					const response=await osmApi.get(
 						`changeset/${encodeURIComponent(changesetIdString)}.json`
 					)
-					if (!response.ok) throw new TypeError(`failed to fetch changeset metadata`)
+					if (!response.ok) throw new TypeError(`Failed to fetch changeset metadata`)
 					const json=await response.json()
 					expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
 				}
@@ -57,20 +57,20 @@ export default class ChangesetStage {
 					const response=await osmApi.get(
 						`changeset/${encodeURIComponent(changesetIdString)}/download?show_redactions=true`
 					)
-					if (!response.ok) throw new TypeError(`failed to fetch changeset changes`)
+					if (!response.ok) throw new TypeError(`Failed to fetch changeset changes`)
 					const text=await response.text()
 					const doc=new DOMParser().parseFromString(text,`text/xml`)
 					for (const $element of doc.querySelectorAll('node, way, relation')) {
 						downloadedChangesCount++
 						const type=$element.localName
-						if (!isOsmElementType(type)) throw new TypeError(`encountered invalid element type`)
+						if (!isOsmElementType(type)) throw new TypeError(`Encountered invalid element type`)
 						const id=toPositiveInteger($element.id)
 						const version=toPositiveInteger($element.getAttribute('version'))
 						startingVersions.add(type,id,version)
 					}
 					this.$downloadedChangesCountOutput.value=String(downloadedChangesCount)
 				}
-				if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`got missing elements in changeset changes`)
+				if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`Got missing elements in changeset changes`)
 	
 				const topVersions=new OsmElementLowerVersionCollection
 				{
@@ -78,7 +78,7 @@ export default class ChangesetStage {
 						const response=await osmApi.get(
 							query
 						)
-						if (!response.ok) throw new TypeError(`failed to fetch top element versions`)
+						if (!response.ok) throw new TypeError(`Failed to fetch top element versions`)
 						const json=await response.json()
 						for (const [type,id,version] of listElementTypesIdsAndVersionsFromElementsResponseJson(json)) {
 							topVersions.add(type,id,version)
@@ -88,6 +88,7 @@ export default class ChangesetStage {
 				for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
 					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
 				}
+				this.runControl.addMessage('success',`Completed fetching elements to redact`)
 			} catch (ex) {
 				this.runControl.handleException(ex)
 			}

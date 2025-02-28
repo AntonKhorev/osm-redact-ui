@@ -1,6 +1,8 @@
 import RunLogger from './run-logger'
 import { makeElement, makeDiv } from './html'
 
+class AbortException {}
+
 export default class RunControl {
 	private abortController?: AbortController
 	readonly logger=new RunLogger
@@ -35,7 +37,7 @@ export default class RunControl {
 		this.abortController=new AbortController
 
 		this.$abortButton.onclick=()=>{
-			this.abortController?.abort()
+			this.abortController?.abort(new AbortException)
 		}
 		this.$abortButton.disabled=false
 
@@ -62,6 +64,10 @@ export default class RunControl {
 	}
 
 	handleException(ex: unknown): void {
+		if (ex instanceof AbortException) {
+			this.addMessage('warning',`Aborted`)
+			return
+		}
 		console.log(ex)
 		if (ex instanceof TypeError) {
 			this.addMessage('error',ex.message)
