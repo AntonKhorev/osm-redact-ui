@@ -23,7 +23,7 @@ export default class ChangesetStage {
 		makeElement('h2')()(`Target changeset`),
 		makeElement('p')('hint')(
 			makeElement('small')()(
-				`Assumes that the changeset is already reverted. `+
+				`Assumes that the offending changes contained in this changeset are already reverted. `+
 				`Collects all element versions from this changeset and their later versions up to but not including the current ones. `+
 				`Copies the collected element versions to `,makeElement('em')()(`target elements`),` below.`
 			)
