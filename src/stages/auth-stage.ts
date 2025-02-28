@@ -38,7 +38,16 @@ export default class AuthStage {
 		const isFileProtocol=location.protocol=='file:'
 		this.authNewStages.push(
 			new (isFileProtocol?AuthNewManualGrantStage:AuthNewAutoGrantStage)(
-				`Authorization on dev server`,'https://master.apis.dev.openstreetmap.org/',
+				`Authorization on Osm.org`,'https://www.openstreetmap.org/',
+				new FixedOsmUrlProvider('https://www.openstreetmap.org/','https://api.openstreetmap.org/'),
+				(authLanding.url=='https://antonkhorev.github.io/osm-redact-ui/'
+					? new FixedOsmClientIdProvider('0U6cqaKK7Zsy7NrDBY8bOQ6DFr1Eml3A_DNEMVtndWo')
+					: new InputOsmClientIdProvider
+				),
+				popupWindowOpener,authLanding
+			),
+			new (isFileProtocol?AuthNewManualGrantStage:AuthNewAutoGrantStage)(
+				`Authorization on Dev server`,'https://master.apis.dev.openstreetmap.org/',
 				new FixedOsmUrlProvider('https://master.apis.dev.openstreetmap.org/'),
 				(authLanding.url=='https://antonkhorev.github.io/osm-redact-ui/'
 					? new FixedOsmClientIdProvider('2pHyb08qEaiSM4x4qUmaAkoJg5v6QL-VMLfrFofNoJY')
