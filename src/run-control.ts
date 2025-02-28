@@ -39,6 +39,14 @@ export default class RunControl {
 		}
 		this.$abortButton.disabled=false
 
+		this.$messages.onclick=(ev)=>{
+			if (!(ev.target instanceof Element)) return
+			const $closeButton=ev.target.closest('button.close')
+			if (!$closeButton) return
+			const $message=$closeButton.closest('.message')
+			$message?.remove()
+		}
+
 		return this.abortController.signal
 	}
 
@@ -56,19 +64,23 @@ export default class RunControl {
 	handleException(ex: unknown): void {
 		console.log(ex)
 		if (ex instanceof TypeError) {
-			this.addErrorMessage(ex.message)
+			this.addMessage('error',ex.message)
 		}
 	}
 
-	addWarningMessage(message: string): void {
+	addMessage(type: 'success'|'warning'|'error', message: string): void {
+		const $closeButton=makeElement('button')('close')()
+		$closeButton.innerHTML=`<svg width='16' height='16' viewBox='-8 -8 16 16' stroke='currentColor' stroke-width='1.5'>`+
+			`<line x1='-4' y1='-4' x2='+4' y2='+4' />`+
+			`<line x1='-4' y1='+4' x2='+4' y2='-4' />`+
+		`</svg>`
 		this.$messages.append(
-			makeDiv('message','warning')(message)
-		)
-	}
-
-	addErrorMessage(message: string): void {
-		this.$messages.append(
-			makeDiv('message','error')(message)
+			makeDiv('message',type)(
+				makeElement('span')('text')(
+					message
+				),
+				$closeButton
+			)
 		)
 	}
 }
