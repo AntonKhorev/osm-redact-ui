@@ -1,10 +1,12 @@
-import { makeElement, makeLink } from "./html"
+import { makeElement, makeDiv, makeLink } from "./html"
 
 export default class RunLogger {
 	private readonly $list=makeElement('ul')()()
-	readonly $widget=makeElement('details')('log')(
+	readonly $widget=makeElement('details')()(
 		makeElement('summary')()(`Log`),
-		this.$list
+		makeDiv('log')(
+			this.$list
+		)
 	)
 
 	clear(): void {
