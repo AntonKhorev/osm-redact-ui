@@ -1,6 +1,5 @@
 import AuthNewStage from './auth-new-stage'
 import OsmUrlProvider from './osm-url-provider'
-import AbortManager from '../../../abort-manager'
 import { makeElement, makeDiv, makeLabel } from '../../../html'
 
 export default class AuthNewTokenStage extends AuthNewStage {
@@ -8,30 +7,27 @@ export default class AuthNewTokenStage extends AuthNewStage {
 
 	constructor(
 		title: string, type: string,
-		osmUrlProvider: OsmUrlProvider, abortManager: AbortManager
+		osmUrlProvider: OsmUrlProvider
 	) {
 		super(title,type,osmUrlProvider)
-
-		abortManager.addRunControl(this.runControl)
 
 		this.$tokenInput.name='auth-token'
 		this.$tokenInput.required=true
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			this.runLogger.clear()
-			const abortSignal=abortManager.enterStage(this.runControl)
+			const abortSignal=this.runControl.enter(this.$runButton)
 			try {
 				const token=this.$tokenInput.value.trim()
 				await this.passToken(abortSignal,{token})
 			} catch (ex) {
 				console.log(ex)
 			}
-			abortManager.exitStage()
+			this.runControl.exit()
 		}
 	}
 
-	protected renderPreRunControlWidgets(): HTMLElement[] {
+	protected renderWidgetsInsideForm(): HTMLElement[] {
 		return [
 			makeDiv('input-group')(
 				makeLabel()(

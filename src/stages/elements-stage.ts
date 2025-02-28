@@ -1,28 +1,23 @@
 import RunControl from '../run-control'
-import RunLogger from '../run-logger'
-import AbortManager from '../abort-manager'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
 import { isOsmElementType } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel } from '../html'
 import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
-	private readonly runControl=new RunControl(
-		`Redact target elements`,
-		`Abort redacting target elements`
-	)
-	private readonly runLogger=new RunLogger
+	private readonly runControl=new RunControl
 
 	readonly $targetTextarea=makeElement('textarea')()()
-
 	private readonly $redactionInput=makeElement('input')()()
+	protected readonly $runButton=makeElement('button')()(`Redact target elements`)
+
 	protected readonly $form=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target elements`)
 	)
 
-	constructor(abortManager: AbortManager, currentOsmAuthProvider: CurrentOsmAuthProvider) {
+	constructor(currentOsmAuthProvider: CurrentOsmAuthProvider) {
 		this.$targetTextarea.rows=10
 		this.$targetTextarea.name='osm-elements-to-redact'
 		this.$targetTextarea.required=true
@@ -31,7 +26,6 @@ export default class ElementsStage {
 		this.$redactionInput.required=true
 
 		this.runControl.$widget.hidden=true
-		abortManager.addRunControl(this.runControl)
 
 		document.body.addEventListener('osmRedactUi:currentAuthUpdate',()=>{
 			this.runControl.$widget.hidden=!currentOsmAuthProvider.currentOsmAuth
@@ -40,8 +34,8 @@ export default class ElementsStage {
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			if (!currentOsmAuthProvider.currentOsmAuth) return
-			const abortSignal=abortManager.enterStage(this.runControl)
-			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runLogger,abortSignal)
+			const abortSignal=this.runControl.enter(this.$runButton)
+			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
@@ -72,7 +66,7 @@ export default class ElementsStage {
 			}
 			// TODO: post-check if top versions match - no, this is only needed after revert
 			// actual TODO: post-check if everything is redacted
-			abortManager.exitStage()
+			this.runControl.exit()
 		}
 	}
 
@@ -88,17 +82,18 @@ export default class ElementsStage {
 					`Redaction id `,this.$redactionInput
 				)
 			),
-			this.runControl.$widget
+			makeDiv('input-group')(
+				this.$runButton
+			)
 		)
 
 		this.$section.append(
 			this.$form,
-			this.runLogger.$widget
+			this.runControl.$widget,
 		)
 	}
 
 	clear() {
-		this.runLogger.clear()
 		this.$targetTextarea.value=''
 	}
 }

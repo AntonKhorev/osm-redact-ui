@@ -3,7 +3,6 @@ import OsmUrlProvider from './osm-url-provider'
 import OsmClientIdProvider from './osm-client-id-provider'
 import PopupWindowOpener from '../../../popup-window-opener'
 import AuthFlowFactory from '../../../auth-flow-factory'
-import AbortManager from '../../../abort-manager'
 import AuthFlow from '../../../auth-flow'
 import { isObject } from '../../../types'
 
@@ -14,16 +13,13 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider,
 		private readonly osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, popupWindowOpener: PopupWindowOpener
+		popupWindowOpener: PopupWindowOpener
 	) {
 		super(title,type,osmUrlProvider)
 
-		abortManager.addRunControl(this.runControl)
-
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			this.runLogger.clear()
-			const abortSignal=abortManager.enterStage(this.runControl)
+			const abortSignal=this.runControl.enter(this.$runButton)
 			try {
 				const osmWebRoot=this.osmWebRoot
 				const clientId=osmClientIdProvider.clientId
@@ -32,7 +28,7 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 				{
 					const urlStart=`${osmWebRoot}oauth2/authorize`
 					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					this.runLogger.appendOperation(`open browser window`,urlStart)
+					this.runControl.logger.appendOperation(`open browser window`,urlStart)
 					const authWindow=popupWindowOpener.open(url)
 					try {
 						code=await this.getAuthCode(abortSignal)
@@ -43,7 +39,7 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 				}
 				{
 					const url=`${osmWebRoot}oauth2/token`
-					this.runLogger.appendRequest('POST',url)
+					this.runControl.logger.appendRequest('POST',url)
 					const response=await fetch(url,{
 						signal: abortSignal,
 						method: 'POST',
@@ -57,11 +53,11 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 			} catch (ex) {
 				console.log(ex)
 			}
-			abortManager.exitStage()
+			this.runControl.exit()
 		}
 	}
 
-	protected renderPreRunControlWidgets(): HTMLElement[] {
+	protected renderWidgetsInsideForm(): HTMLElement[] {
 		return this.osmClientIdProvider.getWidgets()
 	}
 

@@ -3,17 +3,16 @@ import OsmUrlProvider from './osm-url-provider'
 import OsmClientIdProvider from './osm-client-id-provider'
 import AuthLanding from '../../../auth-landing'
 import PopupWindowOpener from '../../../popup-window-opener'
-import AbortManager from '../../../abort-manager'
 import AuthFlow from '../../../auth-flow'
 
 export default class AuthNewAutoGrantStage extends AuthNewGrantStage {
 	constructor(
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider, osmClientIdProvider: OsmClientIdProvider,
-		abortManager: AbortManager, popupWindowOpener: PopupWindowOpener,
+		popupWindowOpener: PopupWindowOpener,
 		private authLanding: AuthLanding
 	) {
-		super(title,type,osmUrlProvider,osmClientIdProvider,abortManager,popupWindowOpener)
+		super(title,type,osmUrlProvider,osmClientIdProvider,popupWindowOpener)
 	}
 
 	protected getAuthFlow(clientId: string): Promise<AuthFlow> {

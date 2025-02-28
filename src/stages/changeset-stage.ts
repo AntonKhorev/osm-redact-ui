@@ -1,7 +1,5 @@
 import ElementsStage from './elements-stage'
 import RunControl from '../run-control'
-import RunLogger from '../run-logger'
-import AbortManager from '../abort-manager'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
 import type { OsmElementType } from '../osm-element-collection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from '../osm-element-collection'
@@ -9,13 +7,11 @@ import { makeElement, makeDiv, makeLabel } from '../html'
 import { isObject, isArray, toPositiveInteger } from '../types'
 
 export default class ChangesetStage {
-	private readonly runControl=new RunControl(
-		`Fetch target elements`,
-		`Abort fetching target elements`
-	)
-	private readonly runLogger=new RunLogger
+	protected readonly runControl=new RunControl
 
 	private readonly $redactedChangesetInput=makeElement('input')()()
+	protected readonly $runButton=makeElement('button')()(`Fetch target elements`)
+
 	protected readonly $form=makeElement('form')('formatted')()
 
 	private readonly $expectedChangesCountOutput=makeElement('output')()()
@@ -25,12 +21,11 @@ export default class ChangesetStage {
 		makeElement('h2')()(`Target changeset`)
 	)
 
-	constructor(abortManager: AbortManager, currentOsmAuthProvider: CurrentOsmAuthProvider, elementsStage: ElementsStage) {
+	constructor(currentOsmAuthProvider: CurrentOsmAuthProvider, elementsStage: ElementsStage) {
 		this.$redactedChangesetInput.name='redacted-changeset'
 		this.$redactedChangesetInput.required=true
 	
 		this.runControl.$widget.hidden=true
-		abortManager.addRunControl(this.runControl)
 	
 		document.body.addEventListener('osmRedactUi:currentAuthUpdate',()=>{
 			this.runControl.$widget.hidden=!currentOsmAuthProvider.currentOsmAuth
@@ -39,10 +34,9 @@ export default class ChangesetStage {
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			if (!currentOsmAuthProvider.currentOsmAuth) return
-			this.runLogger.clear()
 			elementsStage.clear()
-			const abortSignal=abortManager.enterStage(this.runControl)
-			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runLogger,abortSignal)
+			const abortSignal=this.runControl.enter(this.$runButton)
+			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
 				const changesetIdString=this.$redactedChangesetInput.value.trim()
 
@@ -97,7 +91,7 @@ export default class ChangesetStage {
 			} catch (ex) {
 				console.log(ex)
 			}
-			abortManager.exitStage()
+			this.runControl.exit()
 		}
 	}
 
@@ -108,12 +102,14 @@ export default class ChangesetStage {
 					`Changeset id to redact`, this.$redactedChangesetInput
 				)
 			),
-			this.runControl.$widget
+			makeDiv('input-group')(
+				this.$runButton
+			)
 		)
 
 		this.$section.append(
 			this.$form,
-			this.runLogger.$widget,
+			this.runControl.$widget,
 			makeDiv('output-group')(
 				`Expected changes count: `,this.$expectedChangesCountOutput
 			),
@@ -124,7 +120,6 @@ export default class ChangesetStage {
 	}
 
 	clear() {
-		this.runLogger.clear()
 		this.$expectedChangesCountOutput.value=''
 		this.$downloadedChangesCountOutput.value=''
 	}

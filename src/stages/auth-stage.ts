@@ -13,7 +13,6 @@ import FixedOsmClientIdProvider from './auth/new/fixed-osm-client-id-provider'
 import AuthShowStage from './auth/auth-show-stage'
 
 import OsmAuthManager from '../osm-auth-manager'
-import AbortManager from '../abort-manager'
 import PopupWindowOpener from '../popup-window-opener'
 import AuthLanding from '../auth-landing'
 import { makeElement, makeLink } from '../html'
@@ -33,7 +32,7 @@ export default class AuthStage {
 		this.$details
 	)
 
-	constructor(osmAuthManager: OsmAuthManager, abortManager: AbortManager, popupWindowOpener: PopupWindowOpener, authLanding: AuthLanding) {
+	constructor(osmAuthManager: OsmAuthManager, popupWindowOpener: PopupWindowOpener, authLanding: AuthLanding) {
 		this.authShowStage=new AuthShowStage(osmAuthManager)
 
 		const isFileProtocol=location.protocol=='file:'
@@ -45,7 +44,7 @@ export default class AuthStage {
 					? new FixedOsmClientIdProvider('2pHyb08qEaiSM4x4qUmaAkoJg5v6QL-VMLfrFofNoJY')
 					: new InputOsmClientIdProvider
 				),
-				abortManager,popupWindowOpener,authLanding
+				popupWindowOpener,authLanding
 			)
 		)
 		if (!isFileProtocol) this.authNewStages.push(
@@ -53,7 +52,7 @@ export default class AuthStage {
 				`Automatic authorization`,'auto',
 				new InputOsmUrlProvider,
 				new InputOsmClientIdProvider,
-				abortManager,popupWindowOpener,authLanding
+				popupWindowOpener,authLanding
 			)
 		)
 		this.authNewStages.push(
@@ -61,16 +60,14 @@ export default class AuthStage {
 				`Authorization by manually copying a code`,'code',
 				new InputOsmUrlProvider,
 				new InputOsmClientIdProvider,
-				abortManager,popupWindowOpener
+				popupWindowOpener
 			),new AuthNewTokenStage(
 				`Authorization by entering an existing token`,'token',
-				new InputOsmUrlProvider,
-				abortManager
+				new InputOsmUrlProvider
 			),
 			new AuthNewAnonymousStage(
 				`Anonymous authorization`,'anonymous',
-				new InputOsmUrlProvider,
-				abortManager
+				new InputOsmUrlProvider
 			)
 		)
 

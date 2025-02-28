@@ -1,38 +1,52 @@
-import { makeElement, makeDiv } from "./html"
+import RunLogger from './run-logger'
+import { makeElement, makeDiv } from './html'
 
 export default class RunControl {
-	$button=makeElement('button')()()
-	$widget=makeDiv()(
-		makeDiv('input-group')(
-			this.$button
-		)
+	private abortController?: AbortController
+	readonly logger=new RunLogger
+
+	private $originButton?: HTMLButtonElement
+	private readonly $abortButton=makeElement('button')()(`Abort`)
+
+	readonly $widget=makeDiv('run')(
+		makeDiv('abort')(
+			this.$abortButton
+		),
+		this.logger.$widget
 	)
 
-	constructor(
-		private normalButtonLabel: string,
-		private abortButtonLabel: string
-	) {
-		this.$button.textContent=normalButtonLabel
+	constructor() {
+		this.$abortButton.type='button'
+		this.$abortButton.disabled=true
 	}
 
-	enterReadyState() {
-		this.$button.disabled=false
-		this.$button.textContent=this.normalButtonLabel
-		this.$button.onclick=null
-	}
-
-	enterRunningState(abortController: AbortController) {
-		this.$button.disabled=false
-		this.$button.textContent=this.abortButtonLabel
-		this.$button.onclick=(ev)=>{
-			ev.preventDefault()
-			abortController.abort()
+	enter($originButton: HTMLButtonElement): AbortSignal {
+		if (this.abortController) {
+			this.exit()
 		}
+
+		this.$originButton=$originButton
+		this.$originButton.disabled=true
+
+		this.logger.clear()
+		this.abortController=new AbortController
+
+		this.$abortButton.onclick=()=>{
+			this.abortController?.abort()
+		}
+		this.$abortButton.disabled=false
+
+		return this.abortController.signal
 	}
 
-	enterDisabledState() {
-		this.$button.disabled=true
-		this.$button.textContent=this.normalButtonLabel
-		this.$button.onclick=null
+	exit(): void {
+		if (this.$originButton) {
+			this.$originButton.disabled=false
+		}
+		delete this.$originButton
+
+		this.$abortButton.disabled=true
+		this.$abortButton.onclick=null
+		delete this.abortController
 	}
 }

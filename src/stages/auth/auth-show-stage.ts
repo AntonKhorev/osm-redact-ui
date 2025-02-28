@@ -1,4 +1,4 @@
-import RunLogger from '../../run-logger'
+import RunControl from '../../run-control'
 import OsmAuthManager from '../../osm-auth-manager'
 import { isOsmAuthDataWithSameToken, convertOsmUserDetailsJsonToOsmAuthUserData } from '../../osm-auth-data'
 import OsmApi from '../../osm-api'
@@ -6,7 +6,7 @@ import { makeElement, makeLink } from '../../html'
 import { bubbleEvent } from '../../events'
 
 export default class AuthShowStage {
-	private readonly runLogger=new RunLogger
+	private readonly runControl=new RunControl
 
 	private readonly $noCurrentAuthorizationMessage=makeElement('p')()(`No current authorization`)
 	private readonly $authTable=makeElement('table')()()
@@ -37,7 +37,7 @@ export default class AuthShowStage {
 		this.$form.append(
 			this.$noCurrentAuthorizationMessage,
 			this.$authTable,
-			this.runLogger.$widget
+			this.runControl.$widget
 		)
 
 		this.updateAuthTable()
@@ -71,11 +71,10 @@ export default class AuthShowStage {
 			$updateButton.type='button'
 			$updateButton.disabled=!osmAuthData.user
 			$updateButton.onclick=async()=>{
-				this.runLogger.clear()
+				const abortSignal=this.runControl.enter($updateButton)
 				try {
 					if (osmAuthData.user) {
-						const abortSignal=(new AbortController).signal // TODO: connect to some button
-						const osmApi=new OsmApi(osmAuthData.apiRoot,osmAuthData.user.token,this.runLogger,abortSignal)
+						const osmApi=new OsmApi(osmAuthData.apiRoot,osmAuthData.user.token,this.runControl.logger,abortSignal)
 						const response=await osmApi.get(`user/details.json`)
 						if (!response.ok) throw new TypeError(`failed to fetch user details`)
 						const json=await response.json()
@@ -88,19 +87,20 @@ export default class AuthShowStage {
 				} catch (ex) {
 					console.log(ex)
 				}
+				this.runControl.exit()
 				this.updateAuthTable()
 			}
 
 			const $removeButton=makeElement('button')()(`Remove`)
 			$removeButton.type='button'
 			$removeButton.onclick=async()=>{
-				this.runLogger.clear()
+				const abortSignal=this.runControl.enter($removeButton)
 				try {
 					if (osmAuthData.user && osmAuthData.user.clientId) {
 						const url=`${osmAuthData.webRoot}oauth2/revoke`
-						this.runLogger.appendRequest('POST',url)
+						this.runControl.logger.appendRequest('POST',url)
 						await fetch(url,{
-							// signal: abortSignal, // TODO
+							signal: abortSignal,
 							method: 'POST',
 							body: new URLSearchParams([
 								['token',osmAuthData.user.token],
@@ -116,6 +116,7 @@ export default class AuthShowStage {
 				} catch (ex) {
 					console.log(ex)
 				}
+				this.runControl.exit()
 				this.updateAuthTable()
 			}
 

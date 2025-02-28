@@ -8,7 +8,7 @@ import AuthStorage from './auth-storage'
 import AuthLanding from './auth-landing'
 import OsmAuthManager from './osm-auth-manager'
 import PopupWindowOpener from './popup-window-opener'
-import AbortManager from './abort-manager'
+
 import { makeElement } from './html'
 
 main()
@@ -21,11 +21,10 @@ function main(): void {
 
 	const osmAuthManager=new OsmAuthManager(new AuthStorage(prefixedStorage))
 	const popupWindowOpener=new PopupWindowOpener
-	const abortManager=new AbortManager
 
-	const authStage=new AuthStage(osmAuthManager,abortManager,popupWindowOpener,authLanding)
-	const elementsStage=new ElementsStage(abortManager,osmAuthManager.currentProvider)
-	const changesetStage=new ChangesetStage(abortManager,osmAuthManager.currentProvider,elementsStage)
+	const authStage=new AuthStage(osmAuthManager,popupWindowOpener,authLanding)
+	const elementsStage=new ElementsStage(osmAuthManager.currentProvider)
+	const changesetStage=new ChangesetStage(osmAuthManager.currentProvider,elementsStage)
 
 	document.body.append(
 		makeElement('main')()(

@@ -1,20 +1,15 @@
 import RunControl from '../../../run-control'
-import RunLogger from '../../../run-logger'
 import OsmUrlProvider from './osm-url-provider'
 import { OsmAuthData, OsmAuthOauthData, convertOsmUserDetailsJsonToOsmAuthUserData } from '../../../osm-auth-data'
 import OsmApi from '../../../osm-api'
-import { makeElement } from '../../../html'
+import { makeElement, makeDiv } from '../../../html'
 import { bubbleCustomEvent } from '../../../events'
 
 export default abstract class AuthNewStage {
-	protected readonly runControl=new RunControl(
-		`Authorize`,
-		`Abort authorization`
-	)
-	protected readonly runLogger=new RunLogger
+	protected readonly runControl=new RunControl
 
+	protected readonly $runButton=makeElement('button')()(`Authorize`)
 	protected readonly $form=makeElement('form')('formatted')()
-
 	readonly $section=makeElement('section')()()
 
 	constructor(
@@ -34,23 +29,25 @@ export default abstract class AuthNewStage {
 	start() {
 		this.$form.append(
 			...this.osmUrlProvider.getWidgets(),
-			...this.renderPreRunControlWidgets(),
-			this.runControl.$widget,
+			...this.renderWidgetsInsideForm(),
+			makeDiv('input-group')(
+				this.$runButton
+			)
 		)
 
 		this.$section.append(
 			makeElement('h3')()(this.title),
 			this.$form,
-			this.runLogger.$widget,
-			...this.renderPostRunControlWidgets()
+			this.runControl.$widget,
+			...this.renderWidgetsAfterForm()
 		)
 	}
 
-	protected renderPreRunControlWidgets(): HTMLElement[] {
+	protected renderWidgetsInsideForm(): HTMLElement[] {
 		return []
 	}
 
-	protected renderPostRunControlWidgets(): HTMLElement[] {
+	protected renderWidgetsAfterForm(): HTMLElement[] {
 		return []
 	}
 
@@ -60,7 +57,7 @@ export default abstract class AuthNewStage {
 			apiRoot: this.osmApiRoot,
 		}
 		if (oauth) {
-			const osmApi=new OsmApi(osmAuthData.apiRoot,oauth.token,this.runLogger,abortSignal)
+			const osmApi=new OsmApi(osmAuthData.apiRoot,oauth.token,this.runControl.logger,abortSignal)
 			const response=await osmApi.get(`user/details.json`)
 			if (!response.ok) throw new TypeError(`failed to fetch user details`)
 			const json=await response.json()
