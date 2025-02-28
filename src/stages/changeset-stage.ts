@@ -61,6 +61,12 @@ export default class ChangesetStage {
 					if (!response.ok) throw new TypeError(`Failed to fetch changeset metadata`)
 					const json=await response.json()
 					expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
+					const comment=getCommentFromChangesetMetadataResponseJson(json)
+					if (comment) {
+						this.$changesetOverviewSlot.append(
+							` `,makeElement('q')()(comment)
+						)
+					}
 					const username=getUsernameFromChangesetMetadataResponseJson(json)
 					if (username) {
 						this.$changesetOverviewSlot.append(
@@ -178,6 +184,17 @@ function getUsernameFromChangesetMetadataResponseJson(json: unknown): string | u
 		'user' in json.changeset && typeof json.changeset.user=='string'
 	) {
 		return json.changeset.user
+	}
+}
+
+function getCommentFromChangesetMetadataResponseJson(json: unknown): string | undefined {
+	if (
+		isObject(json) &&
+		'changeset' in json && isObject(json.changeset) &&
+		'tags' in json.changeset && isObject(json.changeset.tags) &&
+		'comment' in json.changeset.tags && typeof json.changeset.tags.comment == 'string'
+	) {
+		return json.changeset.tags.comment
 	}
 }
 

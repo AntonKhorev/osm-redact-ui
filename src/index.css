@@ -2,6 +2,10 @@ body {
 	font-family: system-ui;
 }
 
+q {
+	opacity: .8;
+}
+
 form.formatted:not([hidden]) {
 	display: flex;
 	flex-direction: column;
