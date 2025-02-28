@@ -1,7 +1,7 @@
 import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
 import { isOsmElementType } from '../osm-element-collection'
-import { makeElement, makeDiv, makeLabel } from '../html'
+import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
 import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
@@ -14,7 +14,13 @@ export default class ElementsStage {
 	protected readonly $form=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()(
-		makeElement('h2')()(`Target elements`)
+		makeElement('h2')()(`Target elements`),
+		makeElement('p')('hint')(
+			`Receives element versions from the previous stage. `+
+			`This list of versions can also be used with `,makeElement('code')()(`batch_redaction.pl`),
+			` from `,makeLink(`osm-revert-scripts`,`https://github.com/woodpeck/osm-revert-scripts`),`. `+
+			`Performs the actual redactions.`
+		)
 	)
 
 	constructor(currentOsmAuthProvider: CurrentOsmAuthProvider) {
