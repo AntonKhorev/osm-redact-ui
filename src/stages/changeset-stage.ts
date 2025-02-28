@@ -35,6 +35,7 @@ export default class ChangesetStage {
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			if (!currentOsmAuthProvider.currentOsmAuth) return
+			this.clear()
 			elementsStage.clear()
 			const abortSignal=this.runControl.enter(this.$runButton)
 			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
