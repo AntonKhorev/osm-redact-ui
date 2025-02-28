@@ -15,4 +15,8 @@ export default class OsmAuth {
 			signal
 		)
 	}
+
+	webUrl(path: string): string {
+		return this.data.webRoot+path
+	}
 }

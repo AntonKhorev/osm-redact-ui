@@ -3,7 +3,7 @@ import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
 import type { OsmElementType } from '../osm-element-collection'
 import { isOsmElementType, OsmElementLowerVersionCollection } from '../osm-element-collection'
-import { makeElement, makeDiv, makeLabel } from '../html'
+import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
 import { isObject, isArray, toPositiveInteger } from '../types'
 
 export default class ChangesetStage {
@@ -14,6 +14,7 @@ export default class ChangesetStage {
 
 	protected readonly $form=makeElement('form')('formatted')()
 
+	private readonly $changesetOverviewSlot=makeElement('span')()()
 	private readonly $expectedChangesCountOutput=makeElement('output')()()
 	private readonly $downloadedChangesCountOutput=makeElement('output')()()
 	private readonly $elementVersionsToRedactCountOutput=makeElement('output')()()
@@ -40,21 +41,32 @@ export default class ChangesetStage {
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
 			if (!currentOsmAuthProvider.currentOsmAuth) return
+			const osmAuth=currentOsmAuthProvider.currentOsmAuth
 			this.clear()
 			elementsStage.clear()
 			const abortSignal=this.runControl.enter(this.$runButton)
-			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
+			const osmApi=osmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
 				const changesetIdString=this.$redactedChangesetInput.value.trim()
+				const changesetRef=`changeset/${encodeURIComponent(changesetIdString)}`
+				this.$changesetOverviewSlot.append(
+					makeLink(`#${changesetIdString}`,osmAuth.webUrl(changesetRef))
+				)
 
 				let expectedChangesCount: number
 				{
 					const response=await osmApi.get(
-						`changeset/${encodeURIComponent(changesetIdString)}.json`
+						`${changesetRef}.json`
 					)
 					if (!response.ok) throw new TypeError(`Failed to fetch changeset metadata`)
 					const json=await response.json()
 					expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
+					const username=getUsernameFromChangesetMetadataResponseJson(json)
+					if (username) {
+						this.$changesetOverviewSlot.append(
+							` by `,makeLink(username,osmAuth.webUrl(`user/${encodeURIComponent(username)}`))
+						)
+					}
 				}
 				this.$expectedChangesCountOutput.value=String(expectedChangesCount)
 	
@@ -125,6 +137,9 @@ export default class ChangesetStage {
 			this.$form,
 			this.runControl.$widget,
 			makeDiv('output-group')(
+				`Changeset: `,this.$changesetOverviewSlot
+			),
+			makeDiv('output-group')(
 				`Expected changes count: `,this.$expectedChangesCountOutput
 			),
 			makeDiv('output-group')(
@@ -137,6 +152,7 @@ export default class ChangesetStage {
 	}
 
 	clear() {
+		this.$changesetOverviewSlot.replaceChildren()
 		this.$expectedChangesCountOutput.value=''
 		this.$downloadedChangesCountOutput.value=''
 		this.$elementVersionsToRedactCountOutput.value=''
@@ -145,13 +161,23 @@ export default class ChangesetStage {
 
 function getChangesCountFromChangesetMetadataResponseJson(json: unknown): number {
 	if (
-		isObject(json) && 'changeset' in json &&
-		isObject(json.changeset) && 'changes_count' in json.changeset &&
-		typeof json.changeset.changes_count == 'number'
+		isObject(json) &&
+		'changeset' in json && isObject(json.changeset) &&
+		'changes_count' in json.changeset && typeof json.changeset.changes_count == 'number'
 	) {
 		return json.changeset.changes_count
 	} else {
 		throw new TypeError(`received invalid changeset metadata`)
+	}
+}
+
+function getUsernameFromChangesetMetadataResponseJson(json: unknown): string | undefined {
+	if (
+		isObject(json) &&
+		'changeset' in json && isObject(json.changeset) &&
+		'user' in json.changeset && typeof json.changeset.user=='string'
+	) {
+		return json.changeset.user
 	}
 }
 
