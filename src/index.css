@@ -20,6 +20,11 @@ form.formatted:not([hidden]) {
 	}
 }
 
+.hint {
+	font-size: .9rem;
+	opacity: .75;
+}
+
 .run {
 	position: relative;
 	margin: .5rem 0;
