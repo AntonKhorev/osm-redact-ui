@@ -9,7 +9,7 @@ import AuthLanding from './auth-landing'
 import OsmAuthManager from './osm-auth-manager'
 import PopupWindowOpener from './popup-window-opener'
 
-import { makeElement } from './html'
+import { makeElement, makeDiv, makeLink } from './html'
 
 main()
 
@@ -29,6 +29,11 @@ function main(): void {
 	document.body.append(
 		makeElement('main')()(
 			makeElement('h1')()(`Changeset redaction UI`),
+			makeDiv('source-code')(
+				makeElement('small')()(
+					makeLink(`source code`,`https://github.com/AntonKhorev/osm-redact-ui`)
+				)
+			),
 			authStage.$section,
 			changesetStage.$section,
 			elementsStage.$section

@@ -2,8 +2,8 @@ body {
 	font-family: system-ui;
 }
 
-q {
-	opacity: .8;
+small, q {
+	opacity: .75;
 }
 
 form.formatted:not([hidden]) {
@@ -24,9 +24,10 @@ form.formatted:not([hidden]) {
 	}
 }
 
-.hint {
-	font-size: .9rem;
-	opacity: .75;
+.source-code {
+	position: absolute;
+	inset-block-start: 1rem;
+	inset-inline-end: 1rem;
 }
 
 .run {

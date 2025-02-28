@@ -22,9 +22,11 @@ export default class ChangesetStage {
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target changeset`),
 		makeElement('p')('hint')(
-			`Assumes that the changeset is already reverted. `+
-			`Collects all element versions from this changeset and their later versions up to but not including the current ones. `+
-			`Copies the collected element versions to `,makeElement('em')()(`target elements`),` below.`
+			makeElement('small')()(
+				`Assumes that the changeset is already reverted. `+
+				`Collects all element versions from this changeset and their later versions up to but not including the current ones. `+
+				`Copies the collected element versions to `,makeElement('em')()(`target elements`),` below.`
+			)
 		)
 	)
 

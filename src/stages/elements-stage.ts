@@ -16,10 +16,12 @@ export default class ElementsStage {
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target elements`),
 		makeElement('p')('hint')(
-			`Receives element versions from the previous stage. `+
-			`This list of versions can also be used with `,makeElement('code')()(`batch_redaction.pl`),
-			` from `,makeLink(`osm-revert-scripts`,`https://github.com/woodpeck/osm-revert-scripts`),`. `+
-			`Performs the actual redactions.`
+			makeElement('small')()(
+				`Receives element versions from the previous stage. `+
+				`This list of versions can also be used with `,makeElement('code')()(`batch_redaction.pl`),
+				` from `,makeLink(`osm-revert-scripts`,`https://github.com/woodpeck/osm-revert-scripts`),`. `+
+				`Performs the actual redactions.`
+			)
 		)
 	)
 
