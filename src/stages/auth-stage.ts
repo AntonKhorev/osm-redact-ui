@@ -87,7 +87,7 @@ export default class AuthStage {
 				this.$summary.replaceChildren(
 					`Currently accessing `,
 					makeLink(osmAuthData.webRoot,osmAuthData.webRoot),
-					`anonymously`
+					` anonymously`
 				)
 			} else {
 				this.$summary.replaceChildren(
