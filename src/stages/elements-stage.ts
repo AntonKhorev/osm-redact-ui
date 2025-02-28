@@ -25,10 +25,10 @@ export default class ElementsStage {
 		this.$redactionInput.name='redaction-id'
 		this.$redactionInput.required=true
 
-		this.runControl.$widget.hidden=true
+		this.$section.hidden=true
 
 		document.body.addEventListener('osmRedactUi:currentAuthUpdate',()=>{
-			this.runControl.$widget.hidden=!currentOsmAuthProvider.currentOsmAuth
+			this.$section.hidden=!currentOsmAuthProvider.currentOsmAuth
 		})
 
 		this.$form.onsubmit=async(ev)=>{
