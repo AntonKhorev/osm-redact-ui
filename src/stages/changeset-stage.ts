@@ -16,6 +16,7 @@ export default class ChangesetStage {
 
 	private readonly $expectedChangesCountOutput=makeElement('output')()()
 	private readonly $downloadedChangesCountOutput=makeElement('output')()()
+	private readonly $elementVersionsToRedactCountOutput=makeElement('output')()()
 
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target changeset`)
@@ -85,10 +86,16 @@ export default class ChangesetStage {
 						}
 					}
 				}
+				let evCount=0
 				for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
 					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
+					evCount++
 				}
-				this.runControl.addMessage('success',`Completed fetching elements to redact`)
+				this.$elementVersionsToRedactCountOutput.value=String(evCount)
+				this.runControl.addMessage('success',(evCount>0
+					? `Completed fetching element versions to redact`
+					: `Completed with no element versions to redact`
+				))
 			} catch (ex) {
 				this.runControl.handleException(ex)
 			}
@@ -117,12 +124,16 @@ export default class ChangesetStage {
 			makeDiv('output-group')(
 				`Downloaded changes count: `,this.$downloadedChangesCountOutput
 			),
+			makeDiv('output-group')(
+				`Number of element versions to redact: `,this.$elementVersionsToRedactCountOutput
+			)
 		)
 	}
 
 	clear() {
 		this.$expectedChangesCountOutput.value=''
 		this.$downloadedChangesCountOutput.value=''
+		this.$elementVersionsToRedactCountOutput.value=''
 	}
 }
 
