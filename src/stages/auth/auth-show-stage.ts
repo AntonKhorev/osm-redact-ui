@@ -76,16 +76,17 @@ export default class AuthShowStage {
 					if (osmAuthData.user) {
 						const osmApi=new OsmApi(osmAuthData.apiRoot,osmAuthData.user.token,this.runControl.logger,abortSignal)
 						const response=await osmApi.get(`user/details.json`)
-						if (!response.ok) throw new TypeError(`failed to fetch user details`)
+						if (!response.ok) throw new TypeError(`Failed to fetch user details`)
 						const json=await response.json()
 						const {clientId,token}=osmAuthData.user
 						osmAuthData.user=convertOsmUserDetailsJsonToOsmAuthUserData(json,{clientId,token})
 						if (this.osmAuthManager.updateDataPossiblyUpdatingCurrentData(osmAuthData)) {
 							bubbleEvent(this.$section,'osmRedactUi:currentAuthUpdate')
 						}
+						this.runControl.addMessage('success',`Successfully updated authorization`)
 					}
 				} catch (ex) {
-					console.log(ex)
+					this.runControl.handleException(ex)
 				}
 				this.runControl.exit()
 				this.updateAuthTable()
@@ -99,7 +100,7 @@ export default class AuthShowStage {
 					if (osmAuthData.user && osmAuthData.user.clientId) {
 						const url=`${osmAuthData.webRoot}oauth2/revoke`
 						this.runControl.logger.appendRequest('POST',url)
-						await fetch(url,{
+						const response=await fetch(url,{
 							signal: abortSignal,
 							method: 'POST',
 							body: new URLSearchParams([
@@ -108,13 +109,14 @@ export default class AuthShowStage {
 							])
 						})
 						// don't need to throw on error
-						// TODO: log error
+						if (!response.ok) this.runControl.addMessage('warning',`Failed to revoke authorization; forgetting about it instead`)
 					}
 					if (this.osmAuthManager.removeDataPossiblyRemovingCurrentData(osmAuthData)) {
 						bubbleEvent(this.$section,'osmRedactUi:currentAuthUpdate')
 					}
+					this.runControl.addMessage('success',`Successfully removed authorization`)
 				} catch (ex) {
-					console.log(ex)
+					this.runControl.handleException(ex)
 				}
 				this.runControl.exit()
 				this.updateAuthTable()

@@ -21,7 +21,7 @@ export default class AuthNewTokenStage extends AuthNewStage {
 				const token=this.$tokenInput.value.trim()
 				await this.passToken(abortSignal,{token})
 			} catch (ex) {
-				console.log(ex)
+				this.runControl.handleException(ex)
 			}
 			this.runControl.exit()
 		}

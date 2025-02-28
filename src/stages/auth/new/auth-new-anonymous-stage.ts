@@ -14,7 +14,7 @@ export default class AuthNewAnonymousStage extends AuthNewStage {
 			try {
 				await this.passToken(abortSignal)
 			} catch (ex) {
-				console.log(ex)
+				this.runControl.handleException(ex)
 			}
 			this.runControl.exit()
 		}

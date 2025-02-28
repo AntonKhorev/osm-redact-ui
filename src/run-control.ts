@@ -64,13 +64,18 @@ export default class RunControl {
 	}
 
 	handleException(ex: unknown): void {
-		if (ex instanceof AbortException) {
+		if (
+			ex instanceof AbortException ||
+			ex instanceof Event && ex.type=='abort'
+		) {
 			this.addMessage('warning',`Aborted`)
 			return
 		}
 		console.log(ex)
 		if (ex instanceof TypeError) {
 			this.addMessage('error',ex.message)
+		} else {
+			this.addMessage('error',`Unexpected error: ${ex}`)
 		}
 	}
 

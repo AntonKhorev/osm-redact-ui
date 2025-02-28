@@ -51,7 +51,7 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 					await this.passToken(abortSignal,{clientId,token})
 				}
 			} catch (ex) {
-				console.log(ex)
+				this.runControl.handleException(ex)
 			}
 			this.runControl.exit()
 		}

@@ -45,24 +45,25 @@ export default class ElementsStage {
 						const [type,idString,versionString]=line.split('/')
 						let redactedElementWithVersion: string|undefined
 						try {
-							if (!isOsmElementType(type)) throw new TypeError(`received invalid element type`)
+							if (!isOsmElementType(type)) throw new TypeError(`Received invalid element type`)
 							const id=toPositiveInteger(idString)
 							const version=toPositiveInteger(versionString)
 							redactedElementWithVersion=`${type}/${id}/${version}`
 						} catch {
-							console.log(`was unable to parse redaction target line ${line}`)
+							console.log(`Was unable to parse redaction target line ${line}`)
 						}
 						if (redactedElementWithVersion!=null) {
 							const response=await osmApi.post(
 								`${redactedElementWithVersion}/redaction?redaction=${encodeURIComponent(this.$redactionInput.value)}`
 							)
-							if (!response.ok) throw new TypeError(`failed to redact element version`)
+							if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementWithVersion}"`)
 						}
 					}
 					this.$targetTextarea.value=targetValue.replace(/.*\n?/,'')
 				}
+				this.runControl.addMessage('success',`Completed redactions`)
 			} catch (ex) {
-				console.log(ex)
+				this.runControl.handleException(ex)
 			}
 			// TODO: post-check if top versions match - no, this is only needed after revert
 			// actual TODO: post-check if everything is redacted
