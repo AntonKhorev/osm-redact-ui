@@ -7,12 +7,14 @@ export default class RunControl {
 
 	private $originButton?: HTMLButtonElement
 	private readonly $abortButton=makeElement('button')()(`Abort`)
+	private $messages=makeDiv('messages')()
 
 	readonly $widget=makeDiv('run')(
 		makeDiv('abort')(
 			this.$abortButton
 		),
-		this.logger.$widget
+		this.logger.$widget,
+		this.$messages
 	)
 
 	constructor() {
@@ -29,6 +31,7 @@ export default class RunControl {
 		this.$originButton.disabled=true
 
 		this.logger.clear()
+		this.$messages.replaceChildren()
 		this.abortController=new AbortController
 
 		this.$abortButton.onclick=()=>{
@@ -48,5 +51,24 @@ export default class RunControl {
 		this.$abortButton.disabled=true
 		this.$abortButton.onclick=null
 		delete this.abortController
+	}
+
+	handleException(ex: unknown): void {
+		console.log(ex)
+		if (ex instanceof TypeError) {
+			this.addErrorMessage(ex.message)
+		}
+	}
+
+	addWarningMessage(message: string): void {
+		this.$messages.append(
+			makeDiv('message','warning')(message)
+		)
+	}
+
+	addErrorMessage(message: string): void {
+		this.$messages.append(
+			makeDiv('message','error')(message)
+		)
 	}
 }

@@ -1,3 +1,7 @@
+body {
+	font-family: system-ui;
+}
+
 form.formatted:not([hidden]) {
 	display: flex;
 	flex-direction: column;
@@ -17,20 +21,20 @@ form.formatted:not([hidden]) {
 }
 
 .run {
+	margin: .5rem 0;
+	border: dashed 2px #888;
+	padding: .5rem;
+
 	.abort {
 		float: inline-end;
-		margin: .5rem;
+		font-size: .75rem;
 
 		button:not([disabled]) {
 			color: red;
 		}
 	}
 
-	details.log {
-		margin: .5rem 0;
-		border: dashed 2px #888;
-		padding: .5rem;
-
+	.log {
 		ul {
 			list-style: none;
 			margin: .5rem 0 .5rem 1rem;
@@ -38,6 +42,27 @@ form.formatted:not([hidden]) {
 		}
 		ul:empty {
 			margin: 0;
+		}
+	}
+
+	.messages {
+		.message {
+			margin-top: .5rem;
+			padding: .5rem .75rem;
+			color: color-mix(in srgb, var(--message-color, currentColor) 25%, currentColor 75%);
+			background: color-mix(in srgb, var(--message-color, canvas) 50%, canvas 50%);
+			border: solid 1px color-mix(in srgb, currentColor 50%, canvas 50%);
+			border-radius: .25rem;
+		}
+
+		.success {
+			--message-color: #0F08;
+		}
+		.warning {
+			--message-color: #FF08;
+		}
+		.error {
+			--message-color: #F008;
 		}
 	}
 }

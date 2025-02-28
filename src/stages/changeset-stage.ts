@@ -89,7 +89,7 @@ export default class ChangesetStage {
 					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
 				}
 			} catch (ex) {
-				console.log(ex)
+				this.runControl.handleException(ex)
 			}
 			this.runControl.exit()
 		}
