@@ -75,7 +75,7 @@ export default class ElementsStage {
 		this.$form.append(
 			makeDiv('input-group')(
 				makeLabel()(
-					`Elements to redact `,this.$targetTextarea
+					`Element versions to redact `,this.$targetTextarea
 				)
 			),
 			makeDiv('input-group')(
