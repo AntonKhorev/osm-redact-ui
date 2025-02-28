@@ -7,16 +7,7 @@ export default class AuthNewAnonymousStage extends AuthNewStage {
 		osmUrlProvider: OsmUrlProvider
 	) {
 		super(title,type,osmUrlProvider)
-
-		this.$form.onsubmit=async(ev)=>{
-			ev.preventDefault()
-			const abortSignal=this.runControl.enter(this.$runButton)
-			try {
-				await this.passToken(abortSignal)
-			} catch (ex) {
-				this.runControl.handleException(ex)
-			}
-			this.runControl.exit()
-		}
 	}
+
+	protected async getOauthData(abortSignal: AbortSignal): Promise<undefined> {}
 }

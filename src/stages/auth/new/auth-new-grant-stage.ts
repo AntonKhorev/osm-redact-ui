@@ -4,6 +4,7 @@ import OsmClientIdProvider from './osm-client-id-provider'
 import PopupWindowOpener from '../../../popup-window-opener'
 import AuthFlowFactory from '../../../auth-flow-factory'
 import AuthFlow from '../../../auth-flow'
+import { OsmAuthOauthData } from '../../../osm-auth-data'
 import { isObject } from '../../../types'
 
 export default abstract class AuthNewGrantStage extends AuthNewStage {
@@ -13,48 +14,42 @@ export default abstract class AuthNewGrantStage extends AuthNewStage {
 		title: string, type: string,
 		osmUrlProvider: OsmUrlProvider,
 		private readonly osmClientIdProvider: OsmClientIdProvider,
-		popupWindowOpener: PopupWindowOpener
+		private readonly popupWindowOpener: PopupWindowOpener
 	) {
 		super(title,type,osmUrlProvider)
+	}
 
-		this.$form.onsubmit=async(ev)=>{
-			ev.preventDefault()
-			const abortSignal=this.runControl.enter(this.$runButton)
+	protected async getOauthData(abortSignal: AbortSignal): Promise<OsmAuthOauthData> {
+		const osmWebRoot=this.osmWebRoot
+		const clientId=this.osmClientIdProvider.clientId
+		const authFlow=await this.getAuthFlow(clientId)
+		let code: string
+		{
+			const urlStart=`${osmWebRoot}oauth2/authorize`
+			const url=urlStart+`?`+authFlow.getAuthRequestParams()
+			this.runControl.logger.appendOperation(`open browser window`,urlStart)
+			const authWindow=this.popupWindowOpener.open(url)
 			try {
-				const osmWebRoot=this.osmWebRoot
-				const clientId=osmClientIdProvider.clientId
-				const authFlow=await this.getAuthFlow(clientId)
-				let code: string
-				{
-					const urlStart=`${osmWebRoot}oauth2/authorize`
-					const url=urlStart+`?`+authFlow.getAuthRequestParams()
-					this.runControl.logger.appendOperation(`open browser window`,urlStart)
-					const authWindow=popupWindowOpener.open(url)
-					try {
-						code=await this.getAuthCode(abortSignal)
-					} finally {
-						authWindow.close()
-						this.cleanupAfterGetCode(abortSignal)
-					}
-				}
-				{
-					const url=`${osmWebRoot}oauth2/token`
-					this.runControl.logger.appendRequest('POST',url)
-					const response=await fetch(url,{
-						signal: abortSignal,
-						method: 'POST',
-						body: authFlow.getAccessTokenRequestParams(code)
-					})
-					if (!response.ok) throw new TypeError(`failed to fetch token`)
-					const json=await response.json()
-					const token=getTokenFromTokenResponseJson(json)
-					await this.passToken(abortSignal,{clientId,token})
-				}
-			} catch (ex) {
-				this.runControl.handleException(ex)
+				code=await this.getAuthCode(abortSignal)
+			} finally {
+				authWindow.close()
+				this.cleanupAfterGetCode(abortSignal)
 			}
-			this.runControl.exit()
 		}
+		let token: string
+		{
+			const url=`${osmWebRoot}oauth2/token`
+			this.runControl.logger.appendRequest('POST',url)
+			const response=await fetch(url,{
+				signal: abortSignal,
+				method: 'POST',
+				body: authFlow.getAccessTokenRequestParams(code)
+			})
+			if (!response.ok) throw new TypeError(`Failed to fetch token`)
+			const json=await response.json()
+			token=getTokenFromTokenResponseJson(json)
+		}
+		return {clientId,token}
 	}
 
 	protected renderWidgetsInsideForm(): HTMLElement[] {
