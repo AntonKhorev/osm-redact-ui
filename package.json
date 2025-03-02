@@ -4,13 +4,16 @@
   "description": "Web UI for redacting OpenStreetMap changesets",
   "type": "module",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "test": "jest"
   },
   "author": "Anton Khorev",
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.5",
+    "@types/jest": "^29.5.14",
     "rollup": "^4.7.0",
+    "ts-jest": "^29.2.6",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
   }
