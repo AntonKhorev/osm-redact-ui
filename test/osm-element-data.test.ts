@@ -50,6 +50,42 @@ describe(`getOsmElementVersionDataFromString`,()=>{
 			version: 2
 		})
 	})
+	test(`parses short node format`,()=>{
+		expect(
+			getOsmElementVersionDataFromString(
+				defaultServerUrls,
+				`r1234567v8`
+			)
+		).toStrictEqual({
+			type: 'relation',
+			id: 1234567,
+			version: 8
+		})
+	})
+	test(`parses short way format`,()=>{
+		expect(
+			getOsmElementVersionDataFromString(
+				defaultServerUrls,
+				`r123456v7`
+			)
+		).toStrictEqual({
+			type: 'relation',
+			id: 123456,
+			version: 7
+		})
+	})
+	test(`parses short relation format`,()=>{
+		expect(
+			getOsmElementVersionDataFromString(
+				defaultServerUrls,
+				`r12345v6`
+			)
+		).toStrictEqual({
+			type: 'relation',
+			id: 12345,
+			version: 6
+		})
+	})
 	test(`fails on unknown origin in web url`,()=>{
 		expect(
 			()=>getOsmElementVersionDataFromString(

@@ -27,8 +27,17 @@ export function getOsmElementVersionDataFromString(serverUrls: OsmServerUrls, in
 	const extractData=(regExp: RegExp, s: string)=>{
 		const match=s.match(regExp)
 		if (!match) throw new TypeError(`Received invalid element reference`)
-		const [,type,idString,versionString]=match
-		if (!isOsmElementType(type)) throw new TypeError(`Received invalid element type`)
+		let [,type,idString,versionString]=match
+		if (type=='n') {
+			type='node'
+		} else if (type=='w') {
+			type='way'
+		} else if (type=='r') {
+			type='relation'
+		}
+		if (!isOsmElementType(type)) {
+			throw new TypeError(`Received invalid element type`)
+		}
 		const id=toPositiveInteger(idString)
 		const version=toPositiveInteger(versionString)
 		return {type,id,version}
@@ -42,7 +51,7 @@ export function getOsmElementVersionDataFromString(serverUrls: OsmServerUrls, in
 	} catch {}
 
 	return extractData(
-		new RegExp(`^(node|way|relation)s?/(\\d+)/(?:history/)?(\\d+)$`),
+		new RegExp(`^([nwr]|node|way|relation)s?/?(\\d+)(?:/|/history/|v)?(\\d+)$`),
 		input
 	)
 }
