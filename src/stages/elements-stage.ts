@@ -97,6 +97,7 @@ export default class ElementsStage {
 			}
 			// TODO: post-check if top versions match - no, this is only needed after revert
 			// actual TODO: post-check if everything is redacted
+			this.updateElements()
 			this.runControl.exit()
 		}
 	}
