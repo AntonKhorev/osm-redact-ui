@@ -36,13 +36,13 @@ export function getOsmElementVersionDataFromString(serverUrls: OsmServerUrls, in
 
 	try {
 		return extractData(
-			new RegExp(`^(node|way|relation)/(\\d+)/history/(\\d+)$`),
+			new RegExp(`^/*(node|way|relation)s?/+(\\d+)/+(?:history/*)?(\\d+)/*$`),
 			extractWebPath(serverUrls,input)
 		)
 	} catch {}
 
 	return extractData(
-		new RegExp(`^(node|way|relation)/(\\d+)/(?:history/)?(\\d+)$`),
+		new RegExp(`^(node|way|relation)s?/(\\d+)/(?:history/)?(\\d+)$`),
 		input
 	)
 }

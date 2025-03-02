@@ -26,6 +26,18 @@ describe(`getOsmElementVersionDataFromString`,()=>{
 			version: 12
 		})
 	})
+	test(`parses :types/:id/:version`,()=>{
+		expect(
+			getOsmElementVersionDataFromString(
+				defaultServerUrls,
+				`nodes/23/13`
+			)
+		).toStrictEqual({
+			type: 'node',
+			id: 23,
+			version: 13
+		})
+	})
 	test(`parses :type/:id/history/:version`,()=>{
 		expect(
 			getOsmElementVersionDataFromString(
@@ -56,6 +68,18 @@ describe(`getOsmElementVersionDataFromString`,()=>{
 			type: 'node',
 			id: 1,
 			version: 4
+		})
+	})
+	test(`parses web url with extra slashes`,()=>{
+		expect(
+			getOsmElementVersionDataFromString(
+				defaultServerUrls,
+				`https://www.example.com//node////57352///history//1///`
+			)
+		).toStrictEqual({
+			type: 'node',
+			id: 57352,
+			version: 1
 		})
 	})
 	test(`parses web url with hash`,()=>{
