@@ -1,8 +1,7 @@
 import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
-import { isOsmElementType } from '../osm-element-collection'
+import { getOsmElementVersionDataFromString } from '../osm-element-data'
 import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
-import { toPositiveInteger } from '../types'
 
 export default class ElementsStage {
 	private readonly runControl=new RunControl
@@ -50,21 +49,18 @@ export default class ElementsStage {
 					const lineMatch=targetValue.match(/.*/)
 					if (lineMatch) {
 						const [line]=lineMatch
-						const [type,idString,versionString]=line.split('/')
-						let redactedElementWithVersion: string|undefined
+						let redactedElementVersionString: string|undefined
 						try {
-							if (!isOsmElementType(type)) throw new TypeError(`Received invalid element type`)
-							const id=toPositiveInteger(idString)
-							const version=toPositiveInteger(versionString)
-							redactedElementWithVersion=`${type}/${id}/${version}`
+							const elementVersion=getOsmElementVersionDataFromString(line)
+							redactedElementVersionString=`${elementVersion.type}/${elementVersion.id}/${elementVersion.version}`
 						} catch {
 							console.log(`Was unable to parse redaction target line ${line}`)
 						}
-						if (redactedElementWithVersion!=null) {
+						if (redactedElementVersionString!=null) {
 							const response=await osmApi.post(
-								`${redactedElementWithVersion}/redaction?redaction=${encodeURIComponent(this.$redactionInput.value)}`
+								`${redactedElementVersionString}/redaction?redaction=${encodeURIComponent(this.$redactionInput.value)}`
 							)
-							if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementWithVersion}"`)
+							if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementVersionString}"`)
 						}
 					}
 					this.$targetTextarea.value=targetValue.replace(/.*\n?/,'')

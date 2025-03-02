@@ -1,16 +1,11 @@
-export type OsmElementType = 'node'|'way'|'relation'
-
-export function isOsmElementType(t: unknown): t is OsmElementType {
-	if (typeof t != 'string') return false
-	return t=='node' || t=='way' || t=='relation'
-}
+import { OsmElementType } from './osm-element-data'
 
 export class OsmElementLowerVersionCollection {
 	nodes=new Map<number,number>
 	ways=new Map<number,number>
 	relations=new Map<number,number>
 
-	add(type: OsmElementType, id: number, version: number) {
+	add(type: OsmElementType, id: number, version: number) { // TODO: accept element version struct
 		let typeMap: Map<number,number>
 		if (type=='node') {
 			typeMap=this.nodes

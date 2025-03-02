@@ -1,8 +1,8 @@
 import ElementsStage from './elements-stage'
 import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
-import type { OsmElementType } from '../osm-element-collection'
-import { isOsmElementType, OsmElementLowerVersionCollection } from '../osm-element-collection'
+import { OsmElementType, isOsmElementType } from '../osm-element-data'
+import { OsmElementLowerVersionCollection } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
 import { isObject, isArray, toPositiveInteger } from '../types'
 
