@@ -8,6 +8,7 @@ export default class ElementsStage {
 
 	readonly $targetTextarea=makeElement('textarea')()()
 	private readonly $redactionInput=makeElement('input')()()
+	private readonly $redactionsList=makeDiv()()
 	protected readonly $runButton=makeElement('button')()(`Redact target elements`)
 
 	protected readonly $form=makeElement('form')('formatted')()
@@ -35,7 +36,15 @@ export default class ElementsStage {
 		this.$section.hidden=true
 
 		document.body.addEventListener('osmRedactUi:currentAuthUpdate',()=>{
-			this.$section.hidden=!currentOsmAuthProvider.currentOsmAuth
+			const osmAuth=currentOsmAuthProvider.currentOsmAuth
+			this.$section.hidden=!osmAuth
+			this.$redactionsList.replaceChildren()
+			if (!osmAuth) return
+			this.$redactionsList.replaceChildren(
+				makeElement('small')()(
+					`Visit `,makeLink(`redactions page`,osmAuth.webUrl('redactions')),` to see available redactions or make a new one.`
+				)
+			)
 		})
 
 		this.$form.onsubmit=async(ev)=>{
@@ -86,7 +95,8 @@ export default class ElementsStage {
 			makeDiv('input-group')(
 				makeLabel()(
 					`Redaction id `,this.$redactionInput
-				)
+				),
+				this.$redactionsList
 			),
 			makeDiv('input-group')(
 				this.$runButton
