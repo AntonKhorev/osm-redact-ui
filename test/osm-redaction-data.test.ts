@@ -47,19 +47,19 @@ describe(`getOsmRedactionIdFromString`,()=>{
 		).toBe(44)
 	})
 	test(`fails on unknown origin in web url`,()=>{
-			expect(
-				()=>getOsmRedactionIdFromString(
-					defaultServerUrls,
-					`https://unknown.example.com/redactions/5`
-				)
-			).toThrow(TypeError)
-		})
-		test(`parses web url`,()=>{
-			expect(
-				getOsmRedactionIdFromString(
-					defaultServerUrls,
-					`https://www.example.com/redactions/5`
-				)
-			).toBe(5)
-		})
+		expect(
+			()=>getOsmRedactionIdFromString(
+				defaultServerUrls,
+				`https://unknown.example.com/redactions/5`
+			)
+		).toThrow(TypeError)
+	})
+	test(`parses web url`,()=>{
+		expect(
+			getOsmRedactionIdFromString(
+				defaultServerUrls,
+				`https://www.example.com/redactions/5`
+			)
+		).toBe(5)
+	})
 })

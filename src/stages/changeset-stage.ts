@@ -1,6 +1,7 @@
 import ElementsStage from './elements-stage'
 import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
+import { getOsmChangesetIdFromString } from '../osm-changeset-data'
 import { OsmElementVersionData, isOsmElementVersionData, getOsmElementVersionDataFromDomElement } from '../osm-element-data'
 import { OsmElementLowerVersionCollection } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
@@ -42,17 +43,20 @@ export default class ChangesetStage {
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			if (!currentOsmAuthProvider.currentOsmAuth) return
 			const osmAuth=currentOsmAuthProvider.currentOsmAuth
+			if (!osmAuth) return
 			this.clear()
 			elementsStage.clear()
 			const abortSignal=this.runControl.enter(this.$runButton)
 			const osmApi=osmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
-				const changesetIdString=this.$redactedChangesetInput.value.trim()
-				const changesetRef=`changeset/${encodeURIComponent(changesetIdString)}`
+				const changesetId=getOsmChangesetIdFromString(
+					osmAuth.serverUrls,
+					this.$redactedChangesetInput.value.trim()
+				)
+				const changesetRef=`changeset/${encodeURIComponent(changesetId)}`
 				this.$changesetOverviewSlot.append(
-					makeLink(`#${changesetIdString}`,osmAuth.webUrl(changesetRef))
+					makeLink(`#${changesetId}`,osmAuth.webUrl(changesetRef))
 				)
 
 				let expectedChangesCount: number
@@ -82,7 +86,7 @@ export default class ChangesetStage {
 				const startingVersions=new OsmElementLowerVersionCollection
 				{
 					const response=await osmApi.get(
-						`changeset/${encodeURIComponent(changesetIdString)}/download?show_redactions=true`
+						`changeset/${encodeURIComponent(changesetId)}/download?show_redactions=true`
 					)
 					if (!response.ok) throw new TypeError(`Failed to fetch changeset changes`)
 					const text=await response.text()
@@ -130,7 +134,7 @@ export default class ChangesetStage {
 		this.$form.append(
 			makeDiv('input-group')(
 				makeLabel()(
-					`Changeset id to redact`, this.$redactedChangesetInput
+					`Changeset id or URL to redact`, this.$redactedChangesetInput
 				)
 			),
 			makeDiv('input-group')(
