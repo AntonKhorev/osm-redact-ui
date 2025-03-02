@@ -1,10 +1,10 @@
 import ElementsStage from './elements-stage'
 import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
-import { OsmElementType, isOsmElementType } from '../osm-element-data'
+import { OsmElementVersionData, isOsmElementVersionData, getOsmElementVersionDataFromDomElement } from '../osm-element-data'
 import { OsmElementLowerVersionCollection } from '../osm-element-collection'
 import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
-import { isObject, isArray, toPositiveInteger } from '../types'
+import { isObject, isArray } from '../types'
 
 export default class ChangesetStage {
 	protected readonly runControl=new RunControl
@@ -89,11 +89,8 @@ export default class ChangesetStage {
 					const doc=new DOMParser().parseFromString(text,`text/xml`)
 					for (const $element of doc.querySelectorAll('node, way, relation')) {
 						downloadedChangesCount++
-						const type=$element.localName
-						if (!isOsmElementType(type)) throw new TypeError(`Encountered invalid element type`)
-						const id=toPositiveInteger($element.id)
-						const version=toPositiveInteger($element.getAttribute('version'))
-						startingVersions.add(type,id,version)
+						const ev=getOsmElementVersionDataFromDomElement($element)
+						startingVersions.add(ev)
 					}
 					this.$downloadedChangesCountOutput.value=String(downloadedChangesCount)
 				}
@@ -107,14 +104,14 @@ export default class ChangesetStage {
 						)
 						if (!response.ok) throw new TypeError(`Failed to fetch top element versions`)
 						const json=await response.json()
-						for (const [type,id,version] of listElementTypesIdsAndVersionsFromElementsResponseJson(json)) {
-							topVersions.add(type,id,version)
+						for (const ev of listElementTypesIdsAndVersionsFromElementsResponseJson(json)) {
+							topVersions.add(ev)
 						}
 					}
 				}
 				let evCount=0
-				for (const [type,id,version] of startingVersions.listElementTypesIdsAndVersionsBefore(topVersions)) {
-					elementsStage.$targetTextarea.value+=`${type}/${id}/${version}\n`
+				for (const ev of startingVersions.listElementVersionsBefore(topVersions)) {
+					elementsStage.$targetTextarea.value+=`${ev.type}/${ev.id}/${ev.version}\n`
 					evCount++
 				}
 				this.$elementVersionsToRedactCountOutput.value=String(evCount)
@@ -200,19 +197,14 @@ function getCommentFromChangesetMetadataResponseJson(json: unknown): string | un
 	}
 }
 
-function *listElementTypesIdsAndVersionsFromElementsResponseJson(json: unknown): Generator<[OsmElementType,number,number]> {
+function *listElementTypesIdsAndVersionsFromElementsResponseJson(json: unknown): Generator<OsmElementVersionData> {
 	if (
 		isObject(json) && 'elements' in json &&
 		isArray(json.elements)
 	) {
 		for (const element of json.elements) {
-			if (
-				isObject(element) &&
-				'type' in element && isOsmElementType(element.type) &&
-				'id' in element && typeof element.id == 'number' &&
-				'version' in element && typeof element.version == 'number'
-			) {
-				yield [element.type,element.id,element.version]
+			if (isOsmElementVersionData(element)) {
+				yield element
 			} else {
 				throw new TypeError(`received invalid element data`)
 			}

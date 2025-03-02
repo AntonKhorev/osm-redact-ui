@@ -1,28 +1,28 @@
-import { OsmElementType } from './osm-element-data'
+import { OsmElementType, OsmElementVersionData } from './osm-element-data'
 
 export class OsmElementLowerVersionCollection {
 	nodes=new Map<number,number>
 	ways=new Map<number,number>
 	relations=new Map<number,number>
 
-	add(type: OsmElementType, id: number, version: number) { // TODO: accept element version struct
+	add(ev: OsmElementVersionData) {
 		let typeMap: Map<number,number>
-		if (type=='node') {
+		if (ev.type=='node') {
 			typeMap=this.nodes
-		} else if (type=='way') {
+		} else if (ev.type=='way') {
 			typeMap=this.ways
-		} else if (type=='relation') {
+		} else if (ev.type=='relation') {
 			typeMap=this.relations
 		} else {
 			throw new TypeError(`tried to add invalid element type`)
 		}
-		const existingVersion=typeMap.get(id)
-		if (existingVersion==null || version<existingVersion) {
-			typeMap.set(id,version)
+		const existingVersion=typeMap.get(ev.id)
+		if (existingVersion==null || ev.version<existingVersion) {
+			typeMap.set(ev.id,ev.version)
 		}
 	}
 
-	*listElementTypesIdsAndVersionsBefore(that: OsmElementLowerVersionCollection): Generator<[OsmElementType,number,number]> {
+	*listElementVersionsBefore(that: OsmElementLowerVersionCollection): Generator<OsmElementVersionData> {
 		const typesAndMaps: [OsmElementType,Map<number,number>,Map<number,number>][] = [
 			['node', this.nodes, that.nodes],
 			['way', this.ways, that.ways],
@@ -36,7 +36,7 @@ export class OsmElementLowerVersionCollection {
 				const toVersion=thatTypeMap.get(id)
 				if (fromVersion==null || toVersion==null) continue
 				for (let version=fromVersion;version<toVersion;version++) {
-					yield [type,id,version]
+					yield {type,id,version}
 				}
 			}
 		}
