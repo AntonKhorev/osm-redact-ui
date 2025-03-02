@@ -40,9 +40,10 @@ export default class ElementsStage {
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
-			if (!currentOsmAuthProvider.currentOsmAuth) return
+			const osmAuth=currentOsmAuthProvider.currentOsmAuth
+			if (!osmAuth) return
 			const abortSignal=this.runControl.enter(this.$runButton)
-			const osmApi=currentOsmAuthProvider.currentOsmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
+			const osmApi=osmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
@@ -51,7 +52,7 @@ export default class ElementsStage {
 						const [line]=lineMatch
 						let redactedElementVersionString: string|undefined
 						try {
-							const elementVersion=getOsmElementVersionDataFromString(line)
+							const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
 							redactedElementVersionString=`${elementVersion.type}/${elementVersion.id}/${elementVersion.version}`
 						} catch {
 							console.log(`Was unable to parse redaction target line ${line}`)

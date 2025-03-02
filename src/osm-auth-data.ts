@@ -1,5 +1,10 @@
 import { isObject, isArrayOfStrings } from './types'
 
+export type OsmServerUrls = {
+	webRoot: string
+	apiRoot: string
+}
+
 export type OsmAuthOauthData = {
 	clientId?: string
 	token: string
@@ -21,9 +26,7 @@ export function isOsmAuthUserData(json: unknown): json is OsmAuthUserData {
 	)
 }
 
-export type OsmAuthData = {
-	webRoot: string
-	apiRoot: string
+export type OsmAuthData = OsmServerUrls & {
 	user?: OsmAuthUserData
 }
 export function isOsmAuthData(json: unknown): json is OsmAuthData {

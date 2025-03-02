@@ -1,3 +1,4 @@
+import { OsmServerUrls } from './osm-auth-data'
 import { isObject, toPositiveInteger } from './types'
 
 export type OsmElementType = 'node'|'way'|'relation'
@@ -22,17 +23,36 @@ export function isOsmElementVersionData(json: unknown): json is OsmElementVersio
 	)
 }
 
-const osmElementVersionRegExp=new RegExp(`^(node|way|relation)/(\\d+)/(?:history/)?(\\d+)$`)
+export function getOsmElementVersionDataFromString(serverUrls: OsmServerUrls, input: string): OsmElementVersionData {
+	const extractData=(regExp: RegExp, s: string)=>{
+		const match=s.match(regExp)
+		if (!match) throw new TypeError(`Received invalid element reference`)
+		const [,type,idString,versionString]=match
+		if (!isOsmElementType(type)) throw new TypeError(`Received invalid element type`)
+		const id=toPositiveInteger(idString)
+		const version=toPositiveInteger(versionString)
+		return {type,id,version}
+	}
 
-export function getOsmElementVersionDataFromString(s: string): OsmElementVersionData {
-	const match=s.match(osmElementVersionRegExp)
-	if (!match) throw new TypeError(`Received invalid element reference`)
+	try {
+		const inputUrl=new URL(input)
+		const webRootUrl=new URL(serverUrls.webRoot)
+		if (
+			inputUrl.origin==webRootUrl.origin &&
+			inputUrl.pathname.startsWith(webRootUrl.pathname)
+		) {
+			const path=inputUrl.pathname.slice(webRootUrl.pathname.length)
+			return extractData(
+				new RegExp(`^(node|way|relation)/(\\d+)/history/(\\d+)$`),
+				path
+			)
+		}
+	} catch {}
 
-	const [,type,idString,versionString]=match
-	if (!isOsmElementType(type)) throw new TypeError(`Received invalid element type`)
-	const id=toPositiveInteger(idString)
-	const version=toPositiveInteger(versionString)
-	return {type,id,version}
+	return extractData(
+		new RegExp(`^(node|way|relation)/(\\d+)/(?:history/)?(\\d+)$`),
+		input
+	)
 }
 
 export function getOsmElementVersionDataFromDomElement($element: Element): OsmElementVersionData {

@@ -1,5 +1,5 @@
 import RunLogger from './run-logger'
-import { OsmAuthData } from './osm-auth-data'
+import { OsmAuthData, OsmServerUrls } from './osm-auth-data'
 import OsmApi from './osm-api';
 
 export default class OsmAuth {
@@ -18,5 +18,12 @@ export default class OsmAuth {
 
 	webUrl(path: string): string {
 		return this.data.webRoot+path
+	}
+
+	get serverUrls(): OsmServerUrls {
+		return {
+			webRoot: this.data.webRoot,
+			apiRoot: this.data.apiRoot
+		}
 	}
 }
