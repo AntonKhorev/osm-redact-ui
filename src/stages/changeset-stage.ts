@@ -113,11 +113,14 @@ export default class ChangesetStage {
 						}
 					}
 				}
+				let targetElements=''
 				let evCount=0
 				for (const ev of startingVersions.listElementVersionsBefore(topVersions)) {
-					elementsStage.$targetTextarea.value+=`${ev.type}/${ev.id}/${ev.version}\n`
+					targetElements+=`${ev.type}/${ev.id}/${ev.version}\n`
 					evCount++
 				}
+				elementsStage.$targetTextarea.value=targetElements
+				elementsStage.updateElements()
 				this.$elementVersionsToRedactCountOutput.value=String(evCount)
 				this.runControl.addMessage('success',(evCount>0
 					? `Completed fetching element versions to redact`

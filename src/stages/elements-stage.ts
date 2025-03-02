@@ -4,6 +4,8 @@ import { getOsmElementVersionDataFromString } from '../osm-element-data'
 import { getOsmRedactionIdFromString } from '../osm-redaction-data'
 import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
 
+let targetTextareaCount=0
+
 export default class ElementsStage {
 	private readonly runControl=new RunControl
 
@@ -11,6 +13,8 @@ export default class ElementsStage {
 	private readonly $redactionInput=makeElement('input')()()
 	private readonly $redactionsList=makeDiv()()
 	protected readonly $runButton=makeElement('button')()(`Redact target elements`)
+
+	private readonly $elementsList=makeElement('ul')()()
 
 	protected readonly $form=makeElement('form')('formatted')()
 
@@ -26,7 +30,10 @@ export default class ElementsStage {
 		)
 	)
 
-	constructor(currentOsmAuthProvider: CurrentOsmAuthProvider) {
+	constructor(
+		private readonly currentOsmAuthProvider: CurrentOsmAuthProvider
+	) {
+		this.$targetTextarea.id=`target-elements-${targetTextareaCount++}`
 		this.$targetTextarea.rows=10
 		this.$targetTextarea.name='osm-elements-to-redact'
 		this.$targetTextarea.required=true
@@ -47,6 +54,10 @@ export default class ElementsStage {
 				)
 			)
 		})
+
+		this.$targetTextarea.onchange=()=>{
+			this.updateElements()
+		}
 
 		this.$form.onsubmit=async(ev)=>{
 			ev.preventDefault()
@@ -91,10 +102,20 @@ export default class ElementsStage {
 	}
 
 	start() {
+		const $targetTextareaLabel=makeLabel()(`Element versions to redact`)
+		$targetTextareaLabel.htmlFor=this.$targetTextarea.id
+
+		const $elementsAside=makeElement('aside')('target-elements')(
+			this.$elementsList
+		)
+		$elementsAside.tabIndex=-1
+
 		this.$form.append(
 			makeDiv('input-group')(
-				makeLabel()(
-					`Element versions to redact `,this.$targetTextarea
+				$targetTextareaLabel,
+				makeDiv('aside-group')(
+					this.$targetTextarea,
+					$elementsAside
 				)
 			),
 			makeDiv('input-group')(
@@ -116,5 +137,27 @@ export default class ElementsStage {
 
 	clear() {
 		this.$targetTextarea.value=''
+	}
+
+	updateElements() {
+		this.$elementsList.replaceChildren()
+		const osmAuth=this.currentOsmAuthProvider.currentOsmAuth
+		if (!osmAuth) return
+		for (const line of this.$targetTextarea.value.split('\n')) {
+			try {
+				const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
+				const evString=`${elementVersion.type[0]}${elementVersion.id}v${elementVersion.version}`
+				const evPath=`${elementVersion.type}/${elementVersion.id}/history/${elementVersion.version}`
+				const $a=makeLink(evString,osmAuth.webUrl(evPath))
+				$a.tabIndex=-1
+				this.$elementsList.append(
+					makeElement('li')()(
+						makeElement('code')()(
+							$a
+						)
+					)
+				)
+			} catch {}
+		}
 	}
 }

@@ -21,6 +21,24 @@ form.formatted:not([hidden]) {
 		button { 
 			padding: .5rem;
 		}
+
+		.aside-group {
+			display: flex;
+			gap: .5rem;
+
+			> aside {
+				min-width: 8rem;
+				flex-grow: 1;
+			}
+
+			@media (width < 500px) {
+				flex-direction: column;
+
+				> aside {
+					height: 5rem;
+				}
+			}
+		}
 	}
 }
 
@@ -114,5 +132,24 @@ form.formatted:not([hidden]) {
 		.error {
 			--message-color: #F008;
 		}
+	}
+}
+
+aside.target-elements {
+	position: relative;
+	overflow: auto;
+	margin: 1px 0;
+	background: #8884;
+	border: solid 1px #888;
+	border-radius: 2px;
+	padding: 0 .25em;
+	line-height: .95;
+	white-space: nowrap;
+
+	> ul {
+		position: absolute;
+		padding: 0;
+		margin: 0;
+		list-style: none;
 	}
 }
