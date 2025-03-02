@@ -1,6 +1,7 @@
 import RunControl from '../run-control'
 import CurrentOsmAuthProvider from '../current-osm-auth-provider'
 import { getOsmElementVersionDataFromString } from '../osm-element-data'
+import { getOsmRedactionIdFromString } from '../osm-redaction-data'
 import { makeElement, makeDiv, makeLabel, makeLink } from '../html'
 
 export default class ElementsStage {
@@ -54,6 +55,10 @@ export default class ElementsStage {
 			const abortSignal=this.runControl.enter(this.$runButton)
 			const osmApi=osmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
+				const redactionId=getOsmRedactionIdFromString(
+					osmAuth.serverUrls,
+					this.$redactionInput.value.trim()
+				)
 				let targetValue: string
 				while (targetValue=this.$targetTextarea.value) {
 					const lineMatch=targetValue.match(/.*/)
@@ -68,7 +73,7 @@ export default class ElementsStage {
 						}
 						if (redactedElementVersionString!=null) {
 							const response=await osmApi.post(
-								`${redactedElementVersionString}/redaction?redaction=${encodeURIComponent(this.$redactionInput.value)}`
+								`${redactedElementVersionString}/redaction?redaction=${encodeURIComponent(redactionId)}`
 							)
 							if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementVersionString}"`)
 						}
@@ -94,7 +99,7 @@ export default class ElementsStage {
 			),
 			makeDiv('input-group')(
 				makeLabel()(
-					`Redaction id `,this.$redactionInput
+					`Redaction id or URL`,this.$redactionInput
 				),
 				this.$redactionsList
 			),

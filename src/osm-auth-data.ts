@@ -1,9 +1,5 @@
+import { OsmServerUrls } from './osm-server-urls'
 import { isObject, isArrayOfStrings } from './types'
-
-export type OsmServerUrls = {
-	webRoot: string
-	apiRoot: string
-}
 
 export type OsmAuthOauthData = {
 	clientId?: string

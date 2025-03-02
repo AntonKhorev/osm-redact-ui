@@ -1,5 +1,6 @@
 import RunLogger from './run-logger'
-import { OsmAuthData, OsmServerUrls } from './osm-auth-data'
+import { OsmServerUrls } from './osm-server-urls';
+import { OsmAuthData } from './osm-auth-data'
 import OsmApi from './osm-api';
 
 export default class OsmAuth {

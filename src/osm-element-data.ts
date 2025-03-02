@@ -1,4 +1,4 @@
-import { OsmServerUrls } from './osm-auth-data'
+import { OsmServerUrls, extractWebPath } from './osm-server-urls'
 import { isObject, toPositiveInteger } from './types'
 
 export type OsmElementType = 'node'|'way'|'relation'
@@ -35,18 +35,10 @@ export function getOsmElementVersionDataFromString(serverUrls: OsmServerUrls, in
 	}
 
 	try {
-		const inputUrl=new URL(input)
-		const webRootUrl=new URL(serverUrls.webRoot)
-		if (
-			inputUrl.origin==webRootUrl.origin &&
-			inputUrl.pathname.startsWith(webRootUrl.pathname)
-		) {
-			const path=inputUrl.pathname.slice(webRootUrl.pathname.length)
-			return extractData(
-				new RegExp(`^(node|way|relation)/(\\d+)/history/(\\d+)$`),
-				path
-			)
-		}
+		return extractData(
+			new RegExp(`^(node|way|relation)/(\\d+)/history/(\\d+)$`),
+			extractWebPath(serverUrls,input)
+		)
 	} catch {}
 
 	return extractData(
