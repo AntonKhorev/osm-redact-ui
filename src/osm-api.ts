@@ -16,11 +16,13 @@ export default class OsmApi {
 		return this.fetch(path,'POST')
 	}
 
-	fetch(path: string, method='GET'): Promise<Response> {
+	async fetch(path: string, method='GET'): Promise<Response> {
 		const url=`${this.apiRoot}api/0.6/${path}`
-		this.runLogger.appendRequest(method,url)
+		const logEntry=this.runLogger.appendRequest(method,url)
 		const options: RequestInit = {signal: this.signal, method}
 		if (this.authToken) options.headers={'Authorization': `Bearer ${this.authToken}`}
-		return fetch(url,options)
+		const response=await fetch(url,options)
+		logEntry.appendStatus(response)
+		return response
 	}
 }
