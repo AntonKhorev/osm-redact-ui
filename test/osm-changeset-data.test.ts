@@ -62,12 +62,20 @@ describe(`getOsmChangesetIdFromString`,()=>{
 			)
 		).toBe(217)
 	})
+	test(`parses web url with extra slashes`,()=>{
+		expect(
+			getOsmChangesetIdFromString(
+				defaultServerUrls,
+				`https://www.example.com////changeset//218//`
+			)
+		).toBe(218)
+	})
 	test(`parses web url`,()=>{
 		expect(
 			getOsmChangesetIdFromString(
 				defaultServerUrls,
-				`https://www.example.com/changeset/217#map=18/59.906201/30.283974`
+				`https://www.example.com/changeset/219#map=18/59.906201/30.283974`
 			)
-		).toBe(217)
+		).toBe(219)
 	})
 })

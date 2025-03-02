@@ -62,4 +62,12 @@ describe(`getOsmRedactionIdFromString`,()=>{
 			)
 		).toBe(5)
 	})
+	test(`parses web url with extra slashes`,()=>{
+		expect(
+			getOsmRedactionIdFromString(
+				defaultServerUrls,
+				`https://www.example.com/////redactions///5/////`
+			)
+		).toBe(5)
+	})
 })
