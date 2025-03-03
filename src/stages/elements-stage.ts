@@ -148,12 +148,16 @@ export default class ElementsStage {
 		const osmAuth=this.currentOsmAuthProvider.currentOsmAuth
 		if (!osmAuth) return
 
+		let lineStartingCharIndex:number
+		let lineEndingCharIndex=-1
 		let errorState: {
 			errorCount: number
 			firstErrorLine: string
 		} | undefined
-		for (let line of this.$targetTextarea.value.split('\n')) {
-			line=line.trim()
+		for (const untrimmedLine of this.$targetTextarea.value.split('\n')) {
+			lineStartingCharIndex=lineEndingCharIndex+1
+			lineEndingCharIndex=lineStartingCharIndex+untrimmedLine.length
+			const line=untrimmedLine.trim()
 			if (line=='') continue
 			try {
 				const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
@@ -179,10 +183,18 @@ export default class ElementsStage {
 					this.$elementsList.replaceChildren()
 				}
 				errorState.errorCount++
+				const selectionStart=lineStartingCharIndex
+				const selectionEnd=lineEndingCharIndex
+				const $a=makeElement('a')('error')(line)
+				$a.href='#'+this.$targetTextarea.id
+				$a.onclick=(ev)=>{
+					// ev.preventDefault()
+					this.$targetTextarea.setSelectionRange(selectionStart,selectionEnd)
+				}
 				this.$elementsList.append(
-					makeElement('li')('error')(
+					makeElement('li')()(
 						makeElement('code')()(
-							line
+							$a
 						)
 					)
 				)
