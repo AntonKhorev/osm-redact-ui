@@ -12,7 +12,7 @@ form.formatted:not([hidden]) {
 	gap: .5rem;
 
 	.input-group {
-		input, textarea, button {
+		input:not([type]), textarea, button {
 			display: block;
 			box-sizing: border-box;
 			width: 100%;
@@ -38,6 +38,17 @@ form.formatted:not([hidden]) {
 					height: 5rem;
 				}
 			}
+		}
+	}
+
+	.double-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: inherit;
+
+		> * {
+			flex: 1;
+			min-width: 20rem;
 		}
 	}
 }

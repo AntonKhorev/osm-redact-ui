@@ -13,10 +13,15 @@ export default class ElementsStage {
 	private readonly $redactionInput=makeElement('input')()()
 	private readonly $redactionsList=makeDiv()()
 	protected readonly $runButton=makeElement('button')()(`Redact target elements`)
+	private readonly $stopOnErrorsCheckbox=makeElement('input')()()
 
 	private readonly $elementsList=makeElement('ul')()()
 
 	protected readonly $form=makeElement('form')('formatted')()
+
+	private readonly $redactedTextarea=makeElement('textarea')()()
+	private readonly $skippedTextarea=makeElement('textarea')()()
+	private readonly $postForm=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target elements`),
@@ -40,6 +45,15 @@ export default class ElementsStage {
 		
 		this.$redactionInput.name='redaction-id'
 		this.$redactionInput.required=true
+
+		this.$stopOnErrorsCheckbox.type='checkbox'
+		this.$stopOnErrorsCheckbox.checked=true
+
+		this.$redactedTextarea.autocomplete='off'
+		this.$redactedTextarea.rows=10
+
+		this.$skippedTextarea.autocomplete='off'
+		this.$skippedTextarea.rows=10
 
 		this.$section.hidden=true
 
@@ -74,22 +88,31 @@ export default class ElementsStage {
 				while (targetValue=this.$targetTextarea.value) {
 					const lineMatch=targetValue.match(/.*/)
 					if (lineMatch) {
-						let [line]=lineMatch
-						line=line.trim()
+						const [untrimmedLine]=lineMatch
+						const line=untrimmedLine.trim()
 						if (line!='') {
-							let redactedElementVersionString: string|undefined
 							try {
 								const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
-								redactedElementVersionString=`${elementVersion.type}/${elementVersion.id}/${elementVersion.version}`
-							} catch {
-								console.log(`Was unable to parse redaction target line ${line}`) // shouldn't happen
-							}
-							if (redactedElementVersionString!=null) {
+								const redactedElementVersionString=`${elementVersion.type}/${elementVersion.id}/${elementVersion.version}`
 								const response=await osmApi.post(
 									`${redactedElementVersionString}/redaction?redaction=${encodeURIComponent(redactionId)}`
 								)
 								if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementVersionString}"`)
+								this.$redactedTextarea.value+=untrimmedLine+'\n'
+							} catch (ex) {
+								if (this.$stopOnErrorsCheckbox.checked) {
+									throw ex;
+								} else {
+									this.$skippedTextarea.value+=untrimmedLine+'\n'
+									if (ex instanceof TypeError) {
+										console.log(`Error on line "${line}"`,ex.message);
+									} else {
+										console.log(`Unexpected error on line "${line}"`,ex);
+									}
+								}
 							}
+						} else {
+							this.$redactedTextarea.value+=untrimmedLine+'\n'
 						}
 					}
 					this.$targetTextarea.value=targetValue.replace(/.*\n?/,'')
@@ -98,11 +121,16 @@ export default class ElementsStage {
 			} catch (ex) {
 				this.runControl.handleException(ex)
 			}
-			// TODO: post-check if top versions match - no, this is only needed after revert
-			// actual TODO: post-check if everything is redacted
 			this.updateElements()
 			this.runControl.exit()
 		}
+
+		this.$postForm.onsubmit=(ev)=>{
+			ev.preventDefault()
+		}
+
+		// TODO: post-check if top versions match - no, this is only needed after revert
+		// actual TODO: post-check if everything is redacted
 	}
 
 	start() {
@@ -130,17 +158,40 @@ export default class ElementsStage {
 			),
 			makeDiv('input-group')(
 				this.$runButton
+			),
+			makeDiv('input-group')(
+				makeLabel()(
+					this.$stopOnErrorsCheckbox,` Stop on errors`
+				)
+			)
+		)
+
+		this.$postForm.append(
+			makeDiv('double-group')(
+				makeDiv('input-group')(
+					makeLabel()(
+						`Redacted element versions`,this.$redactedTextarea
+					)
+				),
+				makeDiv('input-group')(
+					makeLabel()(
+						`Skipped element versions`,this.$skippedTextarea
+					)
+				)
 			)
 		)
 
 		this.$section.append(
 			this.$form,
 			this.runControl.$widget,
+			this.$postForm
 		)
 	}
 
 	clear() {
 		this.$targetTextarea.value=''
+		this.$redactedTextarea.value=''
+		this.$skippedTextarea.value=''
 	}
 
 	updateElements() {
