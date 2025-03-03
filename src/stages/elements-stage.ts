@@ -74,19 +74,22 @@ export default class ElementsStage {
 				while (targetValue=this.$targetTextarea.value) {
 					const lineMatch=targetValue.match(/.*/)
 					if (lineMatch) {
-						const [line]=lineMatch
-						let redactedElementVersionString: string|undefined
-						try {
-							const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
-							redactedElementVersionString=`${elementVersion.type}/${elementVersion.id}/${elementVersion.version}`
-						} catch {
-							console.log(`Was unable to parse redaction target line ${line}`)
-						}
-						if (redactedElementVersionString!=null) {
-							const response=await osmApi.post(
-								`${redactedElementVersionString}/redaction?redaction=${encodeURIComponent(redactionId)}`
-							)
-							if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementVersionString}"`)
+						let [line]=lineMatch
+						line=line.trim()
+						if (line!='') {
+							let redactedElementVersionString: string|undefined
+							try {
+								const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
+								redactedElementVersionString=`${elementVersion.type}/${elementVersion.id}/${elementVersion.version}`
+							} catch {
+								console.log(`Was unable to parse redaction target line ${line}`) // shouldn't happen
+							}
+							if (redactedElementVersionString!=null) {
+								const response=await osmApi.post(
+									`${redactedElementVersionString}/redaction?redaction=${encodeURIComponent(redactionId)}`
+								)
+								if (!response.ok) throw new TypeError(`Failed to redact element version "${redactedElementVersionString}"`)
+							}
 						}
 					}
 					this.$targetTextarea.value=targetValue.replace(/.*\n?/,'')
@@ -144,21 +147,55 @@ export default class ElementsStage {
 		this.$elementsList.replaceChildren()
 		const osmAuth=this.currentOsmAuthProvider.currentOsmAuth
 		if (!osmAuth) return
-		for (const line of this.$targetTextarea.value.split('\n')) {
+
+		let errorState: {
+			errorCount: number
+			firstErrorLine: string
+		} | undefined
+		for (let line of this.$targetTextarea.value.split('\n')) {
+			line=line.trim()
+			if (line=='') continue
 			try {
 				const elementVersion=getOsmElementVersionDataFromString(osmAuth.serverUrls,line)
 				const evString=`${elementVersion.type[0]}${elementVersion.id}v${elementVersion.version}`
 				const evPath=`${elementVersion.type}/${elementVersion.id}/history/${elementVersion.version}`
-				const $a=makeLink(evString,osmAuth.webUrl(evPath))
-				$a.tabIndex=-1
+				if (!errorState) {
+					const $a=makeLink(evString,osmAuth.webUrl(evPath))
+					$a.tabIndex=-1
+					this.$elementsList.append(
+						makeElement('li')()(
+							makeElement('code')()(
+								$a
+							)
+						)
+					)
+				}
+			} catch {
+				if (!errorState) {
+					errorState={
+						errorCount: 0,
+						firstErrorLine: line
+					}
+					this.$elementsList.replaceChildren()
+				}
+				errorState.errorCount++
 				this.$elementsList.append(
-					makeElement('li')()(
+					makeElement('li')('error')(
 						makeElement('code')()(
-							$a
+							line
 						)
 					)
 				)
-			} catch {}
+			}
+		}
+		if (!errorState) {
+			this.$targetTextarea.setCustomValidity('')
+		} else if (errorState.errorCount==1) {
+			this.$targetTextarea.setCustomValidity(`Please fix the element reference "${errorState.firstErrorLine}"`)
+		} else if (errorState.errorCount==2) {
+			this.$targetTextarea.setCustomValidity(`Please fix the element reference "${errorState.firstErrorLine}" and one other error`)
+		} else {
+			this.$targetTextarea.setCustomValidity(`Please fix the element reference "${errorState.firstErrorLine}" and ${errorState.errorCount-1} other errors`)
 		}
 	}
 }
