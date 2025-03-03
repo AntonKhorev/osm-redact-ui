@@ -268,7 +268,9 @@ export default class ElementsStage {
 				const $a=makeElement('a')('error')(line)
 				$a.href='#'+this.$targetTextarea.id
 				$a.onclick=(ev)=>{
-					// ev.preventDefault()
+					ev.preventDefault()
+					this.$targetTextarea.scrollIntoView({block:'nearest'})
+					this.$targetTextarea.focus()
 					this.$targetTextarea.setSelectionRange(selectionStart,selectionEnd)
 				}
 				this.$elementsList.append(
