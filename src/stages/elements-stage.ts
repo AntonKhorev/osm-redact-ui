@@ -12,7 +12,7 @@ export default class ElementsStage {
 	readonly $targetTextarea=makeElement('textarea')()()
 	private readonly $redactionInput=makeElement('input')()()
 	private readonly $redactionsList=makeDiv()()
-	protected readonly $runButton=makeElement('button')()(`Redact target elements`)
+	protected readonly $runButton=makeElement('button')()(`Redact targets`)
 	private readonly $stopOnErrorsCheckbox=makeElement('input')()()
 
 	private readonly $elementsList=makeElement('ul')()()
@@ -21,6 +21,7 @@ export default class ElementsStage {
 
 	private readonly $redactedTextarea=makeElement('textarea')()()
 	private readonly $skippedTextarea=makeElement('textarea')()()
+	private readonly $moveSkippedButton=makeElement('button')()(`Move back to targets`)
 	private readonly $postForm=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()(
@@ -54,6 +55,7 @@ export default class ElementsStage {
 
 		this.$skippedTextarea.autocomplete='off'
 		this.$skippedTextarea.rows=10
+		this.$skippedTextarea.required=true
 
 		this.$section.hidden=true
 
@@ -127,6 +129,30 @@ export default class ElementsStage {
 
 		this.$postForm.onsubmit=(ev)=>{
 			ev.preventDefault()
+			let separator=''
+			if (this.$targetTextarea.value!='') {
+				let newlinesBetween=0
+				{
+					const match=this.$targetTextarea.value.match(/\n*$/)
+					if (match) {
+						const [newlines]=match
+						newlinesBetween+=newlines.length
+					}
+				}{
+					const match=this.$skippedTextarea.value.match(/^\n*/)
+					if (match) {
+						const [newlines]=match
+						newlinesBetween+=newlines.length
+					}
+				}
+				if (newlinesBetween==0) {
+					separator='\n\n'
+				} else if (newlinesBetween==1) {
+					separator='\n'
+				}
+			}
+			this.$targetTextarea.value+=separator+this.$skippedTextarea.value
+			this.$skippedTextarea.value=''
 		}
 
 		// TODO: post-check if top versions match - no, this is only needed after revert
@@ -170,12 +196,15 @@ export default class ElementsStage {
 			makeDiv('double-group')(
 				makeDiv('input-group')(
 					makeLabel()(
-						`Redacted element versions`,this.$redactedTextarea
+						`Redacted element versions`,
+						this.$redactedTextarea
 					)
 				),
 				makeDiv('input-group')(
 					makeLabel()(
-						`Skipped element versions`,this.$skippedTextarea
+						`Skipped element versions`,
+						this.$skippedTextarea,
+						this.$moveSkippedButton
 					)
 				)
 			)
