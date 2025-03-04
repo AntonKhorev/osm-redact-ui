@@ -66,7 +66,7 @@ export default class ElementsStage {
 			if (!osmAuth) return
 			this.$redactionsList.replaceChildren(
 				makeElement('small')()(
-					`Visit `,makeLink(`redactions page`,osmAuth.webUrl('redactions')),` to see available redactions or make a new one.`
+					`Visit `,makeLink(`redactions page`,osmAuth.webUrl('redactions')),` to see available redactions or make a new one`
 				)
 			)
 		})

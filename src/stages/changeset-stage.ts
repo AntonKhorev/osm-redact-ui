@@ -145,6 +145,9 @@ export default class ChangesetStage {
 			makeDiv('input-group')(
 				makeLabel()(
 					`Changeset ids or URLs to redact `, this.$targetChangesetsTextarea
+				),
+				makeElement('small')()(
+					`One id/URL per line`
 				)
 			),
 			makeDiv('input-group')(
