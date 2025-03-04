@@ -17,6 +17,9 @@ export default class ChangesetStage {
 
 	private readonly $changesetSummaryTbody=makeElement('tbody')()()
 	private readonly $elementVersionsToRedactCountOutput=makeElement('output')()()
+	private readonly $changesetRevertListInput=makeElement('input')()()
+
+	protected readonly $postForm=makeElement('form')('formatted')()
 
 	readonly $section=makeElement('section')()(
 		makeElement('h2')()(`Target changeset`),
@@ -49,11 +52,13 @@ export default class ChangesetStage {
 			const abortSignal=this.runControl.enter(this.$runButton)
 			const osmApi=osmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
+				const changesetIds: number[] = []
 				const startingVersions=new OsmElementLowerVersionCollection
 				for (const untrimmedLine of this.$targetChangesetsTextarea.value.split('\n')) {
 					const line=untrimmedLine.trim()
 					if (line=='') continue
 					const changesetId=getOsmChangesetIdFromString(osmAuth.serverUrls,line)
+					changesetIds.push(changesetId)
 
 					let expectedChangesCount: number
 					let username: string|undefined
@@ -105,6 +110,7 @@ export default class ChangesetStage {
 					)
 
 					if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`Got missing elements in changeset #${changesetId} data`)
+					this.$changesetRevertListInput.value=changesetIds.join(' ')
 				}
 
 				const topVersions=new OsmElementLowerVersionCollection
@@ -138,6 +144,10 @@ export default class ChangesetStage {
 			}
 			this.runControl.exit()
 		}
+
+		this.$postForm.onsubmit=(ev)=>{
+			ev.preventDefault()
+		}
 	}
 
 	start() {
@@ -162,6 +172,15 @@ export default class ChangesetStage {
 		const colSpan2=($e:HTMLTableCellElement)=>alter($e,($e)=>$e.colSpan=2)
 		const rowSpan2=($e:HTMLTableCellElement)=>alter($e,($e)=>$e.rowSpan=2)
 
+		this.$postForm.append(
+			makeDiv('input-group')(
+				makeLabel()(
+					`List of changesets for revert for `,makeLink(`JOSM Reverter plugin`,'https://wiki.openstreetmap.org/wiki/JOSM/Plugins/Reverter'),` `,
+					this.$changesetRevertListInput
+				)
+			)
+		)
+
 		this.$section.append(
 			this.$form,
 			this.runControl.$widget,
@@ -183,6 +202,12 @@ export default class ChangesetStage {
 			),
 			makeDiv('output-group')(
 				`Number of element versions to redact: `,this.$elementVersionsToRedactCountOutput
+			),
+			makeElement('details')()(
+				makeElement('summary')()(
+					`Extras in case the changesets weren't reverted`
+				),
+				this.$postForm
 			)
 		)
 	}
@@ -190,6 +215,7 @@ export default class ChangesetStage {
 	clear() {
 		this.$changesetSummaryTbody.replaceChildren()
 		this.$elementVersionsToRedactCountOutput.value=''
+		this.$changesetRevertListInput.value=''
 	}
 }
 
