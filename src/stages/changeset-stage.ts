@@ -18,6 +18,7 @@ export default class ChangesetStage {
 	private readonly $changesetSummaryTbody=makeElement('tbody')()()
 	private readonly $elementVersionsToRedactCountOutput=makeElement('output')()()
 	private readonly $changesetRevertListInput=makeElement('input')()()
+	private readonly $changesetRevertListCopyButton=makeElement('button')()(`Copy to clipboard`)
 
 	protected readonly $postForm=makeElement('form')('formatted')()
 
@@ -36,6 +37,8 @@ export default class ChangesetStage {
 		this.$targetChangesetsTextarea.name='target-changesets'
 		this.$targetChangesetsTextarea.required=true
 		this.$targetChangesetsTextarea.rows=5
+
+		this.$changesetRevertListCopyButton.type='button'
 	
 		this.$section.hidden=true
 	
@@ -145,6 +148,10 @@ export default class ChangesetStage {
 			this.runControl.exit()
 		}
 
+		this.$changesetRevertListCopyButton.onclick=async()=>{
+			await navigator.clipboard.writeText(this.$changesetRevertListInput.value)
+		}
+
 		this.$postForm.onsubmit=(ev)=>{
 			ev.preventDefault()
 		}
@@ -176,7 +183,10 @@ export default class ChangesetStage {
 			makeDiv('input-group')(
 				makeLabel()(
 					`List of changesets for revert for `,makeLink(`JOSM Reverter plugin`,'https://wiki.openstreetmap.org/wiki/JOSM/Plugins/Reverter'),` `,
-					this.$changesetRevertListInput
+					makeDiv('input-with-button-group')(
+						this.$changesetRevertListInput,
+						this.$changesetRevertListCopyButton
+					)
 				)
 			)
 		)
