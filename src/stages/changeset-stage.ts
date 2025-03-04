@@ -10,14 +10,12 @@ import { isObject, isArray } from '../types'
 export default class ChangesetStage {
 	protected readonly runControl=new RunControl
 
-	private readonly $redactedChangesetInput=makeElement('input')()()
+	private readonly $targetChangesetsTextarea=makeElement('textarea')()()
 	protected readonly $runButton=makeElement('button')()(`Fetch target elements`)
 
 	protected readonly $form=makeElement('form')('formatted')()
 
-	private readonly $changesetOverviewSlot=makeElement('span')()()
-	private readonly $expectedChangesCountOutput=makeElement('output')()()
-	private readonly $downloadedChangesCountOutput=makeElement('output')()()
+	private readonly $changesetSummaryTbody=makeElement('tbody')()()
 	private readonly $elementVersionsToRedactCountOutput=makeElement('output')()()
 
 	readonly $section=makeElement('section')()(
@@ -32,8 +30,9 @@ export default class ChangesetStage {
 	)
 
 	constructor(currentOsmAuthProvider: CurrentOsmAuthProvider, elementsStage: ElementsStage) {
-		this.$redactedChangesetInput.name='redacted-changeset'
-		this.$redactedChangesetInput.required=true
+		this.$targetChangesetsTextarea.name='target-changesets'
+		this.$targetChangesetsTextarea.required=true
+		this.$targetChangesetsTextarea.rows=5
 	
 		this.$section.hidden=true
 	
@@ -50,56 +49,64 @@ export default class ChangesetStage {
 			const abortSignal=this.runControl.enter(this.$runButton)
 			const osmApi=osmAuth.connectToOsmApi(this.runControl.logger,abortSignal)
 			try {
-				const changesetId=getOsmChangesetIdFromString(
-					osmAuth.serverUrls,
-					this.$redactedChangesetInput.value.trim()
-				)
-				const changesetRef=`changeset/${encodeURIComponent(changesetId)}`
-				this.$changesetOverviewSlot.append(
-					makeLink(`#${changesetId}`,osmAuth.webUrl(changesetRef))
-				)
-
-				let expectedChangesCount: number
-				{
-					const response=await osmApi.get(
-						`${changesetRef}.json`
-					)
-					if (!response.ok) throw new TypeError(`Failed to fetch changeset metadata`)
-					const json=await response.json()
-					expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
-					const comment=getCommentFromChangesetMetadataResponseJson(json)
-					if (comment) {
-						this.$changesetOverviewSlot.append(
-							` `,makeElement('q')()(comment)
-						)
-					}
-					const username=getUsernameFromChangesetMetadataResponseJson(json)
-					if (username) {
-						this.$changesetOverviewSlot.append(
-							` by `,makeLink(username,osmAuth.webUrl(`user/${encodeURIComponent(username)}`))
-						)
-					}
-				}
-				this.$expectedChangesCountOutput.value=String(expectedChangesCount)
-	
-				let downloadedChangesCount=0
 				const startingVersions=new OsmElementLowerVersionCollection
-				{
-					const response=await osmApi.get(
-						`changeset/${encodeURIComponent(changesetId)}/download?show_redactions=true`
-					)
-					if (!response.ok) throw new TypeError(`Failed to fetch changeset changes`)
-					const text=await response.text()
-					const doc=new DOMParser().parseFromString(text,`text/xml`)
-					for (const $element of doc.querySelectorAll('node, way, relation')) {
-						downloadedChangesCount++
-						const ev=getOsmElementVersionDataFromDomElement($element)
-						startingVersions.add(ev)
+				for (const untrimmedLine of this.$targetChangesetsTextarea.value.split('\n')) {
+					const line=untrimmedLine.trim()
+					if (line=='') continue
+					const changesetId=getOsmChangesetIdFromString(osmAuth.serverUrls,line)
+
+					let expectedChangesCount: number
+					let username: string|undefined
+					let comment: string|undefined
+					{
+						const response=await osmApi.get(
+							`changeset/${encodeURIComponent(changesetId)}.json`
+						)
+						if (!response.ok) throw new TypeError(`Failed to fetch metadata of changeset #${changesetId}`)
+						const json=await response.json()
+						expectedChangesCount=getChangesCountFromChangesetMetadataResponseJson(json)
+						username=getUsernameFromChangesetMetadataResponseJson(json)
+						comment=getCommentFromChangesetMetadataResponseJson(json)
 					}
-					this.$downloadedChangesCountOutput.value=String(downloadedChangesCount)
+
+					let downloadedChangesCount=0
+					{
+						const response=await osmApi.get(
+							`changeset/${encodeURIComponent(changesetId)}/download?show_redactions=true`
+						)
+						if (!response.ok) throw new TypeError(`Failed to fetch changeset changes`)
+						const text=await response.text()
+						const doc=new DOMParser().parseFromString(text,`text/xml`)
+						for (const $element of doc.querySelectorAll('node, way, relation')) {
+							downloadedChangesCount++
+							const ev=getOsmElementVersionDataFromDomElement($element)
+							startingVersions.add(ev)
+						}
+					}
+
+					this.$changesetSummaryTbody.append(
+						makeElement('tr')()(
+							makeElement('td')('number')(
+								makeLink(`#${changesetId}`,osmAuth.webUrl(`changeset/${encodeURIComponent(changesetId)}`))
+							),
+							makeElement('td')('number')(
+								String(expectedChangesCount)
+							),
+							makeElement('td')('number')(
+								String(downloadedChangesCount)
+							),
+							makeElement('td')()(
+								username ? makeLink(username,osmAuth.webUrl(`user/${encodeURIComponent(username)}`)) : ''
+							),
+							makeElement('td')()(
+								comment ? makeElement('q')()(comment) : ''
+							)
+						)
+					)
+
+					if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`Got missing elements in changeset #${changesetId} data`)
 				}
-				if (expectedChangesCount!=downloadedChangesCount) throw new TypeError(`Got missing elements in changeset changes`)
-	
+
 				const topVersions=new OsmElementLowerVersionCollection
 				{
 					for (const query of startingVersions.listMultiFetchBatches()) {
@@ -137,7 +144,7 @@ export default class ChangesetStage {
 		this.$form.append(
 			makeDiv('input-group')(
 				makeLabel()(
-					`Changeset id or URL to redact`, this.$redactedChangesetInput
+					`Changeset ids or URLs to redact `, this.$targetChangesetsTextarea
 				)
 			),
 			makeDiv('input-group')(
@@ -145,17 +152,31 @@ export default class ChangesetStage {
 			)
 		)
 
+		const alter=<T>($e:T,fn:($e:T)=>void)=>{
+			fn($e)
+			return $e
+		}
+		const colSpan2=($e:HTMLTableCellElement)=>alter($e,($e)=>$e.colSpan=2)
+		const rowSpan2=($e:HTMLTableCellElement)=>alter($e,($e)=>$e.rowSpan=2)
+
 		this.$section.append(
 			this.$form,
 			this.runControl.$widget,
-			makeDiv('output-group')(
-				`Changeset: `,this.$changesetOverviewSlot
-			),
-			makeDiv('output-group')(
-				`Expected changes count: `,this.$expectedChangesCountOutput
-			),
-			makeDiv('output-group')(
-				`Downloaded changes count: `,this.$downloadedChangesCountOutput
+			makeElement('table')()(
+				makeElement('caption')()(`Scanned changesets`),
+				makeElement('thead')()(
+					makeElement('tr')()(
+						rowSpan2(makeElement('th')()(`changeset`)),
+						colSpan2(makeElement('th')()(`changes`)),
+						rowSpan2(makeElement('th')()(`user`)),
+						rowSpan2(makeElement('th')()(`comment`))
+					),
+					makeElement('tr')()(
+						makeElement('th')()(`expected`),
+						makeElement('th')()(`downloaded`),
+					)
+				),
+				this.$changesetSummaryTbody
 			),
 			makeDiv('output-group')(
 				`Number of element versions to redact: `,this.$elementVersionsToRedactCountOutput
@@ -164,9 +185,7 @@ export default class ChangesetStage {
 	}
 
 	clear() {
-		this.$changesetOverviewSlot.replaceChildren()
-		this.$expectedChangesCountOutput.value=''
-		this.$downloadedChangesCountOutput.value=''
+		this.$changesetSummaryTbody.replaceChildren()
 		this.$elementVersionsToRedactCountOutput.value=''
 	}
 }

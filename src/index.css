@@ -6,6 +6,18 @@ small, q {
 	opacity: .75;
 }
 
+table {
+	border-spacing: 1rem .25rem;
+
+	th {
+		vertical-align: bottom;
+	}
+
+	td.number {
+		text-align: end;
+	}
+}
+
 form.formatted:not([hidden]) {
 	display: flex;
 	flex-direction: column;
